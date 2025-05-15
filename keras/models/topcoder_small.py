@@ -1,7 +1,4 @@
-from keras.layers.core import Dense, Flatten
-from keras.layers.convolutional import Convolution2D
-from keras.layers.normalization import BatchNormalization
-from keras.layers.pooling import MaxPooling2D
+from keras.layers import Dense, Flatten, Conv2D, BatchNormalization, MaxPooling2D
 from keras.models import Sequential
 from keras.regularizers import l2
 

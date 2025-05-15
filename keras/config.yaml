@@ -1,6 +1,6 @@
-train_data_dir: "<path to dataset dir>/training.csv"
-validation_data_dir: "<path to dataset dir>/validation.csv"
-test_data_dir: "<path to dataset dir>/testing.csv"
+train_data_dir: "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/training.csv"
+validation_data_dir: "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/validation.csv"
+test_data_dir: "/mnt//Users/fraca/Documents/GitHub/crnn-lid/testing.csv"
 
 batch_size: 128
 learning_rate: 0.001
@@ -20,7 +20,3 @@ num_classes: 4
 
 # label_names: ["EN", "DE", "FR", "ES", "CN", "RUS"]
 # num_classes: 6
-
-
-
-

@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.io.wavfile as wav
-from csv_loader import CSVLoader
+from .csv_loader import CSVLoader
 from numpy.lib import stride_tricks
 
 class Spectrogram2Loader(CSVLoader):

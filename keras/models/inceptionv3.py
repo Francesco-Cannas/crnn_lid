@@ -1,7 +1,6 @@
 from keras.applications.inception_v3 import InceptionV3
 from keras.models import Model
-from keras.layers import Dense, Input
-from keras.layers.pooling import GlobalAveragePooling2D
+from keras.layers import Dense, Input, GlobalAveragePooling2D
 
 NAME = "InceptionV3"
 

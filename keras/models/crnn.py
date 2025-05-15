@@ -1,9 +1,4 @@
-from keras.layers.core import Dense, Permute, Reshape
-from keras.layers.convolutional import Convolution2D
-from keras.layers.normalization import BatchNormalization
-from keras.layers.pooling import MaxPooling2D
-from keras.layers.wrappers import Bidirectional
-from keras.layers.recurrent import LSTM
+from keras.layers import Dense, Permute, Reshape, Conv2D, BatchNormalization, MaxPooling2D, Bidirectional, LSTM
 from keras.models import Sequential
 from keras.regularizers import l2
 

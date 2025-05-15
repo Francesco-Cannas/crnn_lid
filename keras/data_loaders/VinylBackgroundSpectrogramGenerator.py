@@ -8,7 +8,6 @@ import sox
 import tempfile
 import shutil
 import sys
-
 from pydub import AudioSegment
 
 if (sys.version_info >= (3,0)):

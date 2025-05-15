@@ -1,12 +1,11 @@
 import argparse
 import numpy as np
-from yaml import load
+from yaml import safe_load  
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, roc_curve
 from scipy.optimize import brentq
 from scipy.interpolate import interp1d
 from keras.models import load_model
-from keras.utils.np_utils import to_categorical
-
+from keras.utils import to_categorical
 import data_loaders
 
 def equal_error_rate(y_true, probabilities):
@@ -30,7 +29,8 @@ def metrics_report(y_true, y_pred, probabilities, label_names=None):
 
 def evaluate(cli_args):
 
-    config = load(open(cli_args.config, "rb"))
+    with open(cli_args.config, "r") as f:
+        config = safe_load(f)
 
     # Load Data + Labels
     dataset_dir = config["test_data_dir"] if cli_args.use_test_set else config["validation_data_dir"]

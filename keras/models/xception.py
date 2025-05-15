@@ -1,7 +1,6 @@
 from keras.applications.xception import Xception
 from keras.models import Model
-from keras.layers import Dense, Input
-from keras.layers.pooling import GlobalAveragePooling2D
+from keras.layers import Dense, Input, GlobalAveragePooling2D
 
 NAME = "xception"
 

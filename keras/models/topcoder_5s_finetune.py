@@ -1,7 +1,4 @@
-from keras.layers.core import Dense, Flatten, Dropout
-from keras.layers.convolutional import Convolution2D
-from keras.layers.normalization import BatchNormalization
-from keras.layers.pooling import MaxPooling2D
+from keras.layers import Dense, Flatten, Dropout, Conv2D, BatchNormalization, MaxPooling2D
 from keras.models import Sequential, load_model
 from keras.regularizers import l2
 
@@ -44,7 +41,7 @@ def create_model(input_shape, config, is_training=True):
     for ref_layer in ref_model.layers[:-2]:
         layer = model.get_layer(ref_layer.name)
         if layer:
-            print ref_layer.name
+            print(ref_layer.name)
             layer.set_weights(ref_layer.get_weights())
             layer.trainable = False
 

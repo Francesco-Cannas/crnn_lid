@@ -3,7 +3,7 @@ import shutil
 import numpy as np
 import argparse
 from datetime import datetime
-from yaml import load
+from yaml import safe_load
 from collections import namedtuple
 
 import models
@@ -13,9 +13,15 @@ from evaluate import evaluate
 from keras.callbacks import ModelCheckpoint, TensorBoard, CSVLogger, EarlyStopping
 from keras.optimizers import Adam, RMSprop, SGD
 
+import tensorflow as tf
+print("Num GPUs Available:", len(tf.config.list_physical_devices('GPU')))
+
+
 def train(cli_args, log_dir):
 
-    config = load(open(cli_args.config, "rb"))
+    with open(cli_args.config, "r") as f:
+        config = safe_load(f)
+        
     if config is None:
         print("Please provide a config.")
 
@@ -26,8 +32,13 @@ def train(cli_args, log_dir):
     validation_data_generator = DataLoader(config["validation_data_dir"], config)
 
     # Training Callbacks
-    checkpoint_filename = os.path.join(log_dir, "weights.{epoch:02d}.model")
-    model_checkpoint_callback = ModelCheckpoint(checkpoint_filename, save_best_only=True, verbose=1, monitor="val_acc")
+    checkpoint_filename = os.path.join(log_dir, "weights.{epoch:02d}.keras")
+    model_checkpoint_callback = ModelCheckpoint(
+        filepath=checkpoint_filename,
+        save_best_only=True,
+        verbose=1,
+        monitor="val_acc"
+    )
 
     tensorboard_callback = TensorBoard(log_dir=log_dir, write_images=True)
     csv_logger_callback = CSVLogger(os.path.join(log_dir, "log.csv"))
@@ -89,4 +100,3 @@ if __name__ == "__main__":
 
     DummyCLIArgs = namedtuple("DummyCLIArgs", ["model_dir", "config", "use_test_set"])
     evaluate(DummyCLIArgs(model_file_name, cli_args.config, False))
-

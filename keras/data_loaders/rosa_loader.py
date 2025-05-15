@@ -1,8 +1,6 @@
 import numpy as np
 import librosa
-
-from csv_loader import CSVLoader
-
+from .csv_loader import CSVLoader
 
 class RosaLoader(CSVLoader):
     def process_file(self, file_path):

@@ -1,4 +1,3 @@
-
 if [ $# -lt 2 ]; then
   echo "Usage: $0 <tgz file> <language>"
   exit 1

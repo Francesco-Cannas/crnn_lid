@@ -1,6 +1,4 @@
-from keras.layers import Dense, Permute, Reshape, Input
-from keras.layers.wrappers import Bidirectional
-from keras.layers.recurrent import LSTM
+from keras.layers import Dense, Permute, Reshape, Input, Bidirectional, LSTM
 from keras.models import Model, load_model
 from keras.regularizers import l2
 from keras.applications.inception_v3 import InceptionV3

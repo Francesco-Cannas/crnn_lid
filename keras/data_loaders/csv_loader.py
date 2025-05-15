@@ -1,9 +1,7 @@
 import numpy as np
 import csv
 import abc
-
-from keras.utils.np_utils import to_categorical
-
+from keras.utils import to_categorical
 
 class CSVLoader(object):
 
