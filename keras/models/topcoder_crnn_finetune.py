@@ -1,4 +1,4 @@
-from keras.layers import Dense, Permute, Reshape, Conv2D, BatchNormalization, MaxPooling2D, Bidirectional, LSTM
+from keras.layers import Input, Dense, Permute, Reshape, Conv2D, BatchNormalization, MaxPooling2D, Bidirectional, LSTM
 from keras.models import Sequential, load_model
 from keras.regularizers import l2
 
@@ -9,6 +9,8 @@ def create_model(input_shape, config):
     weight_decay = 0.001
 
     model = Sequential()
+
+    model.add(Input(shape=input_shape))
 
     model.add(Conv2D(16, (7, 7), kernel_regularizer=l2(weight_decay), activation="relu", input_shape=input_shape))
     model.add(BatchNormalization())

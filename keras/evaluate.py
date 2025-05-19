@@ -44,10 +44,7 @@ def evaluate(cli_args):
 
     probabilities = model.predict(
         data_generator.get_data(should_shuffle=False, is_prediction=True),
-        steps=data_generator.get_num_files(),
-        workers=1,  # parallelization messes up data order. careful!
-        max_queue_size=config["batch_size"],
-        use_multiprocessing=True
+        steps=data_generator.get_num_files()
     )
 
     y_pred = np.argmax(probabilities, axis=1)

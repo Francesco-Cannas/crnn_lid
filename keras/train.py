@@ -14,6 +14,21 @@ from keras.callbacks import ModelCheckpoint, TensorBoard, CSVLogger, EarlyStoppi
 from keras.optimizers import Adam, RMSprop, SGD
 
 import tensorflow as tf
+import tensorflow.keras.backend as K
+
+def f1_score(y_true, y_pred):
+    y_true = K.cast(y_true, 'float32')
+    y_pred = K.cast(y_pred, 'float32')
+    y_pred = K.round(y_pred)
+    
+    tp = K.sum(y_true * y_pred, axis=0)
+    fp = K.sum((1 - y_true) * y_pred, axis=0)
+    fn = K.sum(y_true * (1 - y_pred), axis=0)
+
+    precision = tp / (tp + fp + K.epsilon())
+    recall = tp / (tp + fn + K.epsilon())
+    f1 = 2 * precision * recall / (precision + recall + K.epsilon())
+    return K.mean(f1)
 
 def train(cli_args, log_dir):
 
@@ -45,14 +60,14 @@ def train(cli_args, log_dir):
     # Model Generation
     model_class = getattr(models, config["model"])
     model = model_class.create_model(train_data_generator.get_input_shape(), config)
-    print(model.summary())
+    model.summary()
 
     optimizer = Adam(learning_rate=config["learning_rate"])
     # optimizer = RMSprop(lr=config["learning_rate"], rho=0.9, epsilon=1e-08, decay=0.95)
     # optimizer = SGD(lr=config["learning_rate"], decay=1e-6, momentum=0.9, clipnorm=1, clipvalue=10)
     model.compile(optimizer=optimizer,
                   loss="categorical_crossentropy",
-                  metrics=["accuracy", "recall", "precision", "fmeasure"])
+                  metrics=["accuracy", "recall", "precision", f1_score])
 
     if cli_args.weights:
         model.load_weights(cli_args.weights)
@@ -66,9 +81,6 @@ def train(cli_args, log_dir):
         verbose=1,
         validation_data=validation_data_generator.get_data(should_shuffle=False),
         validation_steps=validation_data_generator.get_num_files(),
-        workers=2,
-        max_queue_size=config["batch_size"],
-        use_multiprocessing=True
     )
 
     # Do evaluation on model with best validation accuracy
