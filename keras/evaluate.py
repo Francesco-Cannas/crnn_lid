@@ -42,25 +42,24 @@ def evaluate(cli_args):
     model = load_model(cli_args.model_dir)
     print(model.summary())
 
-    probabilities = model.predict_generator(
+    probabilities = model.predict(
         data_generator.get_data(should_shuffle=False, is_prediction=True),
-        val_samples=data_generator.get_num_files(),
-        nb_worker=1,  # parallelization messes up data order. careful!
-        max_q_size=config["batch_size"],
-        pickle_safe=True
+        steps=data_generator.get_num_files(),
+        workers=1,  # parallelization messes up data order. careful!
+        max_queue_size=config["batch_size"],
+        use_multiprocessing=True
     )
 
     y_pred = np.argmax(probabilities, axis=1)
     y_true = data_generator.get_labels()[:len(y_pred)]
     metrics_report(y_true, y_pred, probabilities, label_names=config["label_names"])
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', dest='model_dir', required=True)
     parser.add_argument('--config', dest='config', required=True)
-    parser.add_argument('--testset', dest='use_test_set', default=False, type=bool)
+    parser.add_argument('--testset', dest='use_test_set', default=False, action='store_true')
     cli_args = parser.parse_args()
 
     evaluate(cli_args)

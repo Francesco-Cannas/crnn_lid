@@ -1,6 +1,3 @@
-
-# -*- coding: utf-8 -*-
-
 import os
 import numpy as np
 import fnmatch
@@ -14,7 +11,6 @@ model_name = "logs/2017-01-02-13-39-41/weights.06.model"
 model = load_model(model_name)
 
 # model_name = "/home/mpss2015m_1/master-thesis/keras/logs/2016-12-16-16-28-42/weights.20.model"
-
 
 LABELS = {
     "english": 0,

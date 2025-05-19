@@ -37,5 +37,4 @@ if __name__ == "__main__":
     if not os.path.isfile(cli_args.input_file):
         sys.exit("Input is not a file.")
 
-
     predict(cli_args)

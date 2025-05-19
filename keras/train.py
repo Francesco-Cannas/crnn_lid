@@ -14,8 +14,6 @@ from keras.callbacks import ModelCheckpoint, TensorBoard, CSVLogger, EarlyStoppi
 from keras.optimizers import Adam, RMSprop, SGD
 
 import tensorflow as tf
-print("Num GPUs Available:", len(tf.config.list_physical_devices('GPU')))
-
 
 def train(cli_args, log_dir):
 
@@ -37,7 +35,7 @@ def train(cli_args, log_dir):
         filepath=checkpoint_filename,
         save_best_only=True,
         verbose=1,
-        monitor="val_acc"
+        monitor="val_accuracy"
     )
 
     tensorboard_callback = TensorBoard(log_dir=log_dir, write_images=True)
@@ -49,7 +47,7 @@ def train(cli_args, log_dir):
     model = model_class.create_model(train_data_generator.get_input_shape(), config)
     print(model.summary())
 
-    optimizer = Adam(lr=config["learning_rate"], decay=1e-6)
+    optimizer = Adam(learning_rate=config["learning_rate"])
     # optimizer = RMSprop(lr=config["learning_rate"], rho=0.9, epsilon=1e-08, decay=0.95)
     # optimizer = SGD(lr=config["learning_rate"], decay=1e-6, momentum=0.9, clipnorm=1, clipvalue=10)
     model.compile(optimizer=optimizer,
@@ -60,21 +58,21 @@ def train(cli_args, log_dir):
         model.load_weights(cli_args.weights)
 
     # Training
-    history = model.fit_generator(
+    history = model.fit(
         train_data_generator.get_data(),
-        samples_per_epoch=train_data_generator.get_num_files(),
-        nb_epoch=config["num_epochs"],
+        steps_per_epoch=train_data_generator.get_num_files(),
+        epochs=config["num_epochs"],
         callbacks=[model_checkpoint_callback, tensorboard_callback, csv_logger_callback, early_stopping_callback],
         verbose=1,
         validation_data=validation_data_generator.get_data(should_shuffle=False),
-        nb_val_samples=validation_data_generator.get_num_files(),
-        nb_worker=2,
-        max_q_size=config["batch_size"],
-        pickle_safe=True
+        validation_steps=validation_data_generator.get_num_files(),
+        workers=2,
+        max_queue_size=config["batch_size"],
+        use_multiprocessing=True
     )
 
     # Do evaluation on model with best validation accuracy
-    best_epoch = np.argmax(history.history["val_acc"])
+    best_epoch = np.argmax(history.history["val_accuracy"])
     print("Log files: ", log_dir)
     print("Best epoch: ", best_epoch + 1)
     model_file_name = checkpoint_filename.replace("{epoch:02d}", "{:02d}".format(best_epoch))
