@@ -2,6 +2,7 @@ import os
 import shutil
 import numpy as np
 import argparse
+import time
 from datetime import datetime
 from yaml import safe_load
 from collections import namedtuple
@@ -12,6 +13,7 @@ from evaluate import evaluate
 
 from keras.callbacks import ModelCheckpoint, TensorBoard, CSVLogger, EarlyStopping
 from keras.optimizers import Adam, RMSprop, SGD
+from keras.metrics import Precision, Recall
 
 import tensorflow as tf
 import tensorflow.keras.backend as K
@@ -67,7 +69,7 @@ def train(cli_args, log_dir):
     # optimizer = SGD(lr=config["learning_rate"], decay=1e-6, momentum=0.9, clipnorm=1, clipvalue=10)
     model.compile(optimizer=optimizer,
                   loss="categorical_crossentropy",
-                  metrics=["accuracy", "recall", "precision", f1_score])
+                  metrics=["accuracy", Recall(), Precision(), f1_score])
 
     if cli_args.weights:
         model.load_weights(cli_args.weights)
@@ -80,13 +82,18 @@ def train(cli_args, log_dir):
         callbacks=[model_checkpoint_callback, tensorboard_callback, csv_logger_callback, early_stopping_callback],
         verbose=1,
         validation_data=validation_data_generator.get_data(should_shuffle=False),
-        validation_steps=validation_data_generator.get_num_files(),
+        validation_steps=validation_data_generator.get_num_files()
     )
 
+    file_path, _ = train_data_generator.images_label_pairs[0]
+    start_time = time.time()
+    img = train_data_generator.process_file(file_path)
+    print(f"Tempo caricamento immagine: {time.time() - start_time:.4f} secondi")
+
     # Do evaluation on model with best validation accuracy
-    best_epoch = np.argmax(history.history["val_accuracy"])
+    best_epoch = np.argmax(history.history["val_accuracy"]) + 1
     print("Log files: ", log_dir)
-    print("Best epoch: ", best_epoch + 1)
+    print("Best epoch: ", best_epoch)
     model_file_name = checkpoint_filename.replace("{epoch:02d}", "{:02d}".format(best_epoch))
 
     return model_file_name

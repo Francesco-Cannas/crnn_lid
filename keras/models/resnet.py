@@ -7,7 +7,7 @@ NAME = "resnet"
 def create_model(input_shape, config):
 
     input_tensor = Input(shape=input_shape)  # this assumes K.image_dim_ordering() == 'tf'
-    resnet_model = ResNet50(include_top=False, weights=None, input_tensor=input_tensor)
+    resnet_model = ResNet50(include_top=False, weights=None)
     print(resnet_model.summary())
 
     x = resnet_model.output

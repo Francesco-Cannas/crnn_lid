@@ -8,7 +8,7 @@ NAME = "Inceptionv3 CRNN"
 def create_model(input_shape, config):
 
     input_tensor = Input(shape=input_shape)  # this assumes K.image_dim_ordering() == 'tf'
-    inception_model = InceptionV3(include_top=False, weights=None, input_tensor=input_tensor)
+    inception_model = InceptionV3(include_top=False, weights=None)
 
     for layer in inception_model.layers:
         layer.trainable = False

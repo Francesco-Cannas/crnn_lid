@@ -5,15 +5,13 @@ from .csv_loader import CSVLoader
 class ImageLoader(CSVLoader):
 
     def process_file(self, file_path):
-        image = imageio.imread(file_path)
-
-        if self.config.get("color_mode", "RGB") == "L" and len(image.shape) == 3:
-            image = np.dot(image[..., :3], [0.2989, 0.5870, 0.1140])
-            image = image.astype(np.uint8)
-
-        if len(image.shape) == 2:
-            image = np.expand_dims(image, -1)
-
-        assert len(image.shape) == 3
-
-        return image / 255.0  # Normalizza a [0,1]
+        
+        if self.config.get("color_mode", "RGB") == "L":
+            img = Image.open(file_path).convert('L')
+            img_array = np.array(img).astype(np.float32) / 255.0
+            img_array = np.expand_dims(img_array, axis=-1)  # (H, W, 1)
+        else:
+            img = Image.open(file_path).convert('RGB')
+            img_array = np.array(img).astype(np.float32) / 255.0
+        
+        return img_array

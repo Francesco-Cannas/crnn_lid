@@ -13,7 +13,7 @@ class CSVLoader(object):
         self.images_label_pairs = []
         self.input_shape = tuple(config["input_shape"])
 
-        with open(data_dir, "rb") as csvfile:
+        with open(data_dir, "r") as csvfile:
             for (file_path, label)in list(csv.reader(csvfile)):
                 self.images_label_pairs.append((file_path, int(label)))
 
@@ -52,10 +52,8 @@ class CSVLoader(object):
         return self.input_shape
 
     def get_num_files(self):
-
-        # Minimum number of data points without overlapping batches
-        return (len(self.images_label_pairs) // self.config["batch_size"]) * self.config["batch_size"]
-
+   
+        return len(self.images_label_pairs) // self.config["batch_size"]
 
     def get_labels(self):
 

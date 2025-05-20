@@ -127,6 +127,5 @@ if __name__ == "__main__":
     a = SpectrogramGenerator("/extra/tom/news2/raw", {"pixel_per_second": 50, "input_shape": [129, 100, 1], "batch_size": 32, "num_classes": 4}, shuffle=True)
     gen = a.get_generator()
 
-
     for a in gen:
         pass

@@ -15,6 +15,7 @@ olefile
 pandas
 pbr
 protobuf
+pydub
 requests
 scikit-learn
 scipy

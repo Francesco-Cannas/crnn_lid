@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-
 import os
 import argparse
-import scipy.misc
 import numpy as np
 import sys
 
@@ -27,11 +24,7 @@ def directory_to_spectrograms(args):
     # Each generator will scan a directory for audio files and convert them to spectrogram images
     # adjust this if you have other languages or any language is missing
     languages = ["english",
-                 "german",
-                 "french",
-                 "spanish",
-                 "chinese",
-                 "russian"]
+                 "german"]
 
     generators = [SpectrogramGenerator(os.path.join(source, language), config, shuffle=False, run_only_once=True) for language in languages]
     generator_queues = [SpectrogramGen.get_generator() for SpectrogramGen in generators]
@@ -54,7 +47,7 @@ def directory_to_spectrograms(args):
                 assert data.shape == target_shape, "Shape mismatch {} vs {}".format(data.shape, args.shape)
 
                 file_name = os.path.join(args.target, language, "{}.png".format(i))
-                scipy.misc.imsave(file_name, np.squeeze(data))
+                imageio.imwrite(file_name, np.squeeze(data))
 
             i += 1
 
@@ -78,4 +71,3 @@ if __name__ == "__main__":
     directory_to_spectrograms(cli_args)
 
     create_csv(cli_args.target)
-
