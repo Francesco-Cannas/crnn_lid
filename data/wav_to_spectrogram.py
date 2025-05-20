@@ -1,5 +1,6 @@
 import os
 import argparse
+import imageio
 import numpy as np
 import sys
 
@@ -27,12 +28,17 @@ def directory_to_spectrograms(args):
                  "german"]
 
     generators = [SpectrogramGenerator(os.path.join(source, language), config, shuffle=False, run_only_once=True) for language in languages]
+
+    for language, generator in zip(languages, generators):
+        print(f"Files trovati per '{language}':")
+        for f in generator.files:
+            print(f)
+
     generator_queues = [SpectrogramGen.get_generator() for SpectrogramGen in generators]
 
     for language in languages:
         output_dir = os.path.join(args.target, language)
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
 
     i = 0
     while True:
@@ -61,13 +67,25 @@ def directory_to_spectrograms(args):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--shape', dest='shape', default=[129, 500, 1], type=int, nargs=3)
-    parser.add_argument('--pixel', dest='pixel_per_second', default=50, type=int)
-    parser.add_argument('--source', dest='source', required=True)
-    parser.add_argument('--target', dest='target', required=True)
-    cli_args = parser.parse_args()
+    source_dir = "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/data/voxforge"
+    target_dir = "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/data/spectrograms"
+
+    class Args:
+        pass
+
+    cli_args = Args()
+    cli_args.source = source_dir
+    cli_args.target = target_dir
+    cli_args.shape = [129, 200, 1]
+    cli_args.pixel_per_second = 50
 
     directory_to_spectrograms(cli_args)
+    
+    train_csv_path = "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/train_data_dir/training.csv"
+    val_csv_path = "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/validation_data_dir/validation.csv"
+    test_csv_path = "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/test_data_dir/testing.csv"
 
-    create_csv(cli_args.target)
+    create_csv(target_dir, train_validation_split=0.8,
+               train_csv_path=train_csv_path,
+               val_csv_path=val_csv_path,
+               test_csv_path=test_csv_path)
