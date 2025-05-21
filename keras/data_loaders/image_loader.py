@@ -1,5 +1,6 @@
 import numpy as np
 import imageio
+from PIL import Image
 from .csv_loader import CSVLoader
 
 class ImageLoader(CSVLoader):

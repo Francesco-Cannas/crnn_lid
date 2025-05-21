@@ -3,14 +3,13 @@ import numpy as np
 import os
 import sys
 from keras.models import load_model
-
 from data_loaders.SpectrogramGenerator import SpectrogramGenerator
-
-class_labels = ["EN", "DE", "FR", "ES", "CN", "RU"]
 
 def predict(cli_args):
 
-    config = {"pixel_per_second": 50, "input_shape": [129, 500, 1], "num_classes": 4}
+    config = {"pixel_per_second": 50, "input_shape": [129, 200, 1], "num_classes": 2, "label_names": ["EN", "DE"]}
+    class_labels = config["label_names"]
+
     data_generator = SpectrogramGenerator(cli_args.input_file, config, shuffle=False, run_only_once=True).get_generator()
     data = [np.divide(image, 255.0) for image in data_generator]
     data = np.stack(data)

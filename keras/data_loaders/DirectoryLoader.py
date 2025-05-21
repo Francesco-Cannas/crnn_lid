@@ -15,11 +15,8 @@ class DirectoryLoader(object):
         self.generators = [
             SpectrogramGenerator(os.path.join(self.source_directory, "english"), config, shuffle=shuffle),
             SpectrogramGenerator(os.path.join(self.source_directory, "german"), config, shuffle=shuffle),
-            SpectrogramGenerator(os.path.join(self.source_directory, "french"), config, shuffle=shuffle),
-            SpectrogramGenerator(os.path.join(self.source_directory, "spanish"), config, shuffle=shuffle),
         ]
 
-        # Prendiamo i generatori semplicemente così
         self.generator_queues = [SpectrogramGen.get_generator() for SpectrogramGen in self.generators]
 
     def get_data(self):
@@ -53,8 +50,8 @@ class DirectoryLoader(object):
         return len(self.generators) * min_num_files * self.config["batch_size"]
 
 if __name__ == "__main__":
-    a = DirectoryLoader("/Users/therold/Downloads/Speech Data/EU Speech",
-                        {"pixel_per_second": 50, "input_shape": [129, 100, 1], "batch_size": 32, "num_classes": 4},
+    a = DirectoryLoader("/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/data/spectrograms",
+                        {"pixel_per_second": 50, "input_shape": [129, 200, 1], "batch_size": 32, "num_classes": 2},
                         shuffle=True)
     print(a.get_num_files())
    
@@ -62,6 +59,6 @@ if __name__ == "__main__":
     for data, labels in a.get_data():
         i = 0
         for image in np.vsplit(data, 32):
-            imageio.imwrite(f"/Users/therold/Downloads/Speech Data/EU Speech/png/{i}.png", np.squeeze(image) * 255.)
+            imageio.imwrite(f"/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/data/spectrograms/png/{i}.png", np.squeeze(image) * 255.)
             i += 1
         break  # evita loop infinito nel test

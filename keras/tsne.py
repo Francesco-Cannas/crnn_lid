@@ -1,8 +1,8 @@
 import argparse
 import os
 import numpy as np
-from yaml import load
-
+import yaml
+import data_loaders
 import matplotlib
 matplotlib.use('pdf')
 import matplotlib.pyplot as plt
@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from keras.models import Sequential, load_model
 from sklearn.manifold import TSNE
 from pandas import DataFrame
-import data_loaders
 
 def plot_with_labels(lowD_Weights, labels, label_names, filename):
 
@@ -38,7 +37,7 @@ def plot_with_labels(lowD_Weights, labels, label_names, filename):
 
 def visualize_cluster(cli_args):
 
-    config = load(open(cli_args.config, "rb"))
+    config = yaml.load(open(cli_args.config, "rb"), Loader=yaml.SafeLoader)
 
     # Load Data + Labels
     DataLoader = getattr(data_loaders, config["data_loader"])
@@ -70,7 +69,6 @@ def visualize_cluster(cli_args):
 
     limit = cli_args.limit
 
-
     # Save probs to file for analysis with external tools
     directory = os.path.dirname(cli_args.plot_name)
     np.savetxt(os.path.join(directory, "probabilities.tsv"), probabilities[:limit], delimiter='\t', newline='\n')
@@ -87,12 +85,13 @@ def visualize_cluster(cli_args):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', dest='model_file', required=True)
     parser.add_argument('--config', dest='config', required=True)
     parser.add_argument('--plot', dest='plot_name')
     parser.add_argument('--limit', dest='limit', default=2000, type=int)
     parser.add_argument('--iter', dest='num_iter', default=4000, type=int)
     cli_args = parser.parse_args()
+
+    cli_args.model_file = "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/keras/models/topcoder_crnn_finetune.py"
 
     if cli_args.plot_name == None:
         cli_args.plot_name = os.path.join(os.path.dirname(cli_args.model_file), "tsne.pdf")

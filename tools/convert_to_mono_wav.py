@@ -31,5 +31,3 @@ if __name__ == '__main__':
 
   for sound_file in walk_path(args.path):
     convert(sound_file)
-
-

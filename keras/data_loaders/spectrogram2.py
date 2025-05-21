@@ -5,7 +5,6 @@ from numpy.lib import stride_tricks
 
 class Spectrogram2Loader(CSVLoader):
 
-
     def stft(self, sig, frameSize, overlapFac=0.5, window=np.hanning):
         win = window(frameSize)
         hopSize = int(frameSize - np.floor(overlapFac * frameSize))

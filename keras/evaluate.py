@@ -1,12 +1,14 @@
 import argparse
 import numpy as np
+import data_loaders
+import time
 from yaml import safe_load  
+from tqdm import tqdm
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, roc_curve
 from scipy.optimize import brentq
 from scipy.interpolate import interp1d
 from keras.models import load_model
 from keras.utils import to_categorical
-import data_loaders
 
 def equal_error_rate(y_true, probabilities):
 
@@ -28,6 +30,21 @@ def metrics_report(y_true, y_pred, probabilities, label_names=None):
 
 
 def evaluate(cli_args):
+    import tensorflow.keras.backend as K
+
+    def f1_score(y_true, y_pred):
+        y_true = K.cast(y_true, 'float32')
+        y_pred = K.cast(y_pred, 'float32')
+        y_pred = K.round(y_pred)
+
+        tp = K.sum(y_true * y_pred, axis=0)
+        fp = K.sum((1 - y_true) * y_pred, axis=0)
+        fn = K.sum(y_true * (1 - y_pred), axis=0)
+
+        precision = tp / (tp + fp + K.epsilon())
+        recall = tp / (tp + fn + K.epsilon())
+        f1 = 2 * precision * recall / (precision + recall + K.epsilon())
+        return K.mean(f1)
 
     with open(cli_args.config, "r") as f:
         config = safe_load(f)
@@ -39,17 +56,38 @@ def evaluate(cli_args):
     data_generator = DataLoader(dataset_dir, config)
 
     # Model Generation
-    model = load_model(cli_args.model_dir)
-    print(model.summary())
+    model = load_model(cli_args.model_dir, custom_objects={'f1_score': f1_score})
+    model.summary()
 
-    probabilities = model.predict(
-        data_generator.get_data(should_shuffle=False, is_prediction=True),
-        steps=data_generator.get_num_files()
-    )
+    total_batches = data_generator.get_num_batches()
+    batches_generator = data_generator.get_data(should_shuffle=False, is_prediction=True, return_labels=True)
 
-    y_pred = np.argmax(probabilities, axis=1)
-    y_true = data_generator.get_labels()[:len(y_pred)]
-    metrics_report(y_true, y_pred, probabilities, label_names=config["label_names"])
+    start_time = time.time()
+    pbar = tqdm(batches_generator, total=total_batches, desc="Evaluating")
+
+    y_preds = []
+    y_true_list = []
+    probabilities_list = []
+
+    for i, (data_batch, label_batch) in enumerate(pbar, 1):
+
+        if i % 50 == 0 or i == 1:
+            print(f"Batch {i}/{total_batches} - Input shape: {data_batch.shape} - Labels shape: {label_batch.shape}")
+        
+        probs_batch = model.predict(data_batch, batch_size=config["batch_size"], verbose=0)
+        y_pred_batch = np.argmax(probs_batch, axis=1)
+        y_true_batch = np.argmax(label_batch, axis=1)
+
+        y_preds.append(y_pred_batch)
+        y_true_list.append(y_true_batch)
+        probabilities_list.append(probs_batch)
+
+    y_preds = np.concatenate(y_preds)
+    y_true_list = np.concatenate(y_true_list)
+    probabilities = np.vstack(probabilities_list)
+
+    metrics_report(y_true_list, y_preds, probabilities, label_names=config["label_names"])
+
 
 if __name__ == "__main__":
 

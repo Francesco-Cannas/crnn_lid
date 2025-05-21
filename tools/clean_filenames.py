@@ -23,4 +23,3 @@ if __name__ == '__main__':
 
             # print "%s -> %s" % (old_filepath, new_filepath)
             shutil.move(old_filepath, new_filepath)
-

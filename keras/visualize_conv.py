@@ -1,5 +1,4 @@
 # Adopted from https://github.com/fchollet/keras/blob/master/examples/conv_filter_visualization.py
-
 from __future__ import print_function
 from scipy.misc import imsave
 import numpy as np
@@ -145,7 +144,6 @@ def visualize_conv_layers(cli_args):
 
             num_filters = layer.output_shape[3]
             visualize_conv_filters(layer.name, num_filters, input_img, layer.output, img_width, img_height)
-
 
 if __name__ == "__main__":
 

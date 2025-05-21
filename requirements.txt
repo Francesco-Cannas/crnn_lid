@@ -9,6 +9,8 @@ funcsigs
 h5py
 html5lib
 imageio
+librosa
+matplotlib
 mock
 numpy
 olefile
@@ -24,4 +26,5 @@ six
 sox
 tensorflow
 Theano
+tqdm
 Werkzeug

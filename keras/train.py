@@ -77,12 +77,17 @@ def train(cli_args, log_dir):
     # Training
     history = model.fit(
         train_data_generator.get_data(),
-        steps_per_epoch=train_data_generator.get_num_files(),
+        steps_per_epoch=train_data_generator.get_num_batches(),
         epochs=config["num_epochs"],
-        callbacks=[model_checkpoint_callback, tensorboard_callback, csv_logger_callback, early_stopping_callback],
+        callbacks=[
+            model_checkpoint_callback,
+            tensorboard_callback,
+            csv_logger_callback,
+            early_stopping_callback
+        ],
         verbose=1,
         validation_data=validation_data_generator.get_data(should_shuffle=False),
-        validation_steps=validation_data_generator.get_num_files()
+        validation_steps=validation_data_generator.get_num_batches()
     )
 
     file_path, _ = train_data_generator.images_label_pairs[0]
@@ -98,7 +103,6 @@ def train(cli_args, log_dir):
 
     return model_file_name
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -109,8 +113,10 @@ if __name__ == "__main__":
     log_dir = os.path.join("logs", datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
     print("Logging to {}".format(log_dir))
 
-    # copy models & config for later
-    shutil.copytree("models", log_dir)  # creates the log_dir
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    shutil.copytree("models", os.path.join(log_dir, "models"), dirs_exist_ok=True)
     shutil.copy(cli_args.config, log_dir)
 
     model_file_name = train(cli_args, log_dir)

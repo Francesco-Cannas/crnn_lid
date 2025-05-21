@@ -67,15 +67,10 @@ class SpectrogramGenerator(object):
         return np.array(image)
 
     def get_generator(self):
-
         start = 0
-
         while True:
-
             file = self.files[start]
-
             try:
-
                 target_height, target_width, target_channels = self.config["input_shape"]
 
                 image = self.audioToSpectrogram(file, self.config["pixel_per_second"], target_height)
@@ -104,23 +99,16 @@ class SpectrogramGenerator(object):
                 pass
 
             finally:
-
                 start += 1
                 if start >= len(self.files):
-
                     if self.run_only_once:
                         break
-
                     start = 0
-
                     if self.shuffle:
                         np.random.shuffle(self.files)
 
-
     def get_num_files(self):
-
         return len(self.files)
-
 
 if __name__ == "__main__":
 
