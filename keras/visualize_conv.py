@@ -1,158 +1,188 @@
-# Adopted from https://github.com/fchollet/keras/blob/master/examples/conv_filter_visualization.py
-from __future__ import print_function
-from scipy.misc import imsave
-import numpy as np
 import argparse
-import time
+import yaml
+import os, time, pickle
 from math import ceil, sqrt
-from keras.models import load_model
-from keras import backend as K
-from keras.backend import set_learning_phase
+import numpy as np
+import imageio
+import tensorflow as tf
+from tensorflow.keras import backend as K
+from tensorflow.keras.models import Sequential, Model, load_model
+from tensorflow.keras.layers import (Input, Conv2D, BatchNormalization, MaxPooling2D, Permute, Reshape, Bidirectional, LSTM, Dense)
+from tensorflow.keras.regularizers import l2
+from models.topcoder_crnn_finetune import create_model
 
-set_learning_phase(0)
+output_dir = "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/img_conv_filter"
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
-# util function to convert a tensor into a valid image
 def deprocess_image(x):
-    # normalize tensor: center on 0., ensure std is 0.1
+    x = x.copy()
     x -= x.mean()
-    x /= (x.std() + 1e-5)
-    x *= 0.1
-
-    # clip to [0, 1]
-    x += 0.5
+    std = x.std()
+    if std < 1e-5:
+        return np.zeros_like(x, dtype=np.uint8)
+    x /= std
+    x = np.tanh(x)  
+    x = (x + 1) / 2
     x = np.clip(x, 0, 1)
-
-    # convert to RGB array
     x *= 255
-    if K.image_dim_ordering() == "th":
+    if K.image_data_format() == "channels_first":
         x = x.transpose((1, 2, 0))
-    x = np.clip(x, 0, 255).astype("uint8")
-    return x
+    return x.astype("uint8")
 
 def normalize(x):
-    # utility function to normalize a tensor by its L2 norm
+    # Normalize tensor by its L2 norm.
     return x / (K.sqrt(K.mean(K.square(x))) + 1e-5)
 
-def visualize_conv_filters(layer_name, num_filters, input_img, output, img_width, img_height):
-
-    kept_filters = []
-    for filter_index in range(0, num_filters):
-        # we only scan through the first 200 filters,
-        # but there are actually 512 of them
-        print("Processing filter %d" % filter_index)
-        start_time = time.time()
-
-        # we build a loss function that maximizes the activation
-        # of the nth filter of the layer considered
-        layer_output = output
-        if K.image_dim_ordering() == "th":
-            loss = K.mean(layer_output[:, filter_index, :, :])
-        else:
-            loss = K.mean(layer_output[:, :, :, filter_index])
-
-        # we compute the gradient of the input picture wrt this loss
-        grads = K.gradients(loss, input_img)[0]
-
-        # normalization trick: we normalize the gradient
-        grads = normalize(grads)
-
-        # this function returns the loss and grads given the input picture
-        iterate = K.function([input_img], [loss, grads])
-
-        # step size for gradient ascent
-        step = 1.0
-
-        # we start from a gray image with some random noise
-        if K.image_dim_ordering() == "th":
-            input_img_data = np.random.random((1, 1, img_width, img_height))
-        else:
-            input_img_data = np.random.random((1, img_height, img_width, 1))
-        # input_img_data = (input_img_data - 0.5) * 20 + 128
-
-        # we run gradient ascent for 20 steps
-        for i in range(20):
-            loss_value, grads_value = iterate([input_img_data])
-            input_img_data += grads_value * step
-
-            print("Current loss value:", loss_value)
-            if loss_value <= 0.:
-                # some filters get stuck to 0, we can skip them
-                break
-
-        # decode the resulting input image
-        if loss_value > 0:
-            img = deprocess_image(input_img_data[0])
-            kept_filters.append((img, loss_value))
-        end_time = time.time()
-        print("Filter %d processed in %ds" % (filter_index, end_time - start_time))
-
-    # we will stich the best 64 filters on a 8 x 8 grid.
-    n = int(ceil(sqrt(num_filters)))
-
-    # the filters that have the highest loss are assumed to be better-looking.
-    # we will only keep the top 64 filters.
-    kept_filters.sort(key=lambda x: x[1], reverse=True)
-    #kept_filters = kept_filters[:n * n]
+def create_stitched_image(kept_filters, img_width, img_height, margin=5):
     n = int(ceil(sqrt(len(kept_filters))))
-    #
-    # import pickle
-    # # pickle.dump(kept_filters, open("filters.pickle", "wb"))
-    # kept_filters = pickle.load(open("filters.pickle", "rb"))
+    remaining = n * n - len(kept_filters)
+    black_img = np.zeros((img_height, img_width, 1), dtype=np.uint8)
+    kept_filters += [(black_img, 0.0)] * remaining
 
-    remaining_filters = n*n - len(kept_filters)
-    for i in range(remaining_filters):
-        kept_filters.append((np.zeros((img_height, img_width, 1)), 0.0))
+    stitched_height = n * img_height + (n - 1) * margin
+    stitched_width = n * img_width + (n - 1) * margin
+    stitched_filters = np.zeros((stitched_height, stitched_width, 1), dtype=np.uint8)
 
-    # build a black picture with enough space for
-    # our 8 x 8 filters of size 128 x 128, with a 5px margin in between
-    margin = 5
-    width = n * img_width + (n - 1) * margin
-    height = n * img_height + (n - 1) * margin
-    stitched_filters = np.zeros((width, height, 1))
-
-    # fill the picture with our saved filters
     for i in range(n):
         for j in range(n):
             img, loss = kept_filters[i * n + j]
 
-            # swap X > Y Axis
-            img = np.transpose(img, [1, 0, 2])
-            # imsave("{}.png".format(i * n + j), np.squeeze(img))
+            if img.ndim == 3:
+                if img.shape[0] == 1 or img.shape[0] == 3: 
+                    img = np.transpose(img, (1, 2, 0))
+            elif img.ndim == 2:
+                img = img[:, :, np.newaxis]
 
-            stitched_filters[(img_width + margin) * i: (img_width + margin) * i + img_width,
-            (img_height + margin) * j: (img_height + margin) * j + img_height, :] = img
+            if img.shape != (img_height, img_width, 1):
+                resized_img = np.zeros((img_height, img_width, 1), dtype=np.uint8)
+                h = min(img.shape[0], img_height)
+                w = min(img.shape[1], img_width)
+                resized_img[:h, :w, :] = img[:h, :w, :]
+                img = resized_img
 
-    # save the result to disk
-    imsave("{0}_{1}x{1}.png".format(layer_name, n), np.transpose(np.squeeze(stitched_filters)))
+            y_start = i * (img_height + margin)
+            y_end = y_start + img_height
+            x_start = j * (img_width + margin)
+            x_end = x_start + img_width
+            stitched_filters[y_start:y_end, x_start:x_end, :] = img
 
+    return stitched_filters
 
-def visualize_conv_layers(cli_args):
+def compute_loss_and_grads(input_img_data_tensor, model_input, layer_output, filter_index):
+    with tf.GradientTape() as tape:
+        tape.watch(input_img_data_tensor)
+        activation = model_input(input_img_data_tensor)
+        loss = tf.reduce_mean(layer_output[:, :, :, filter_index])
+    grads = tape.gradient(loss, input_img_data_tensor)
+    grads = grads / (tf.sqrt(tf.reduce_mean(tf.square(grads))) + 1e-5)
+    return loss, grads
 
-    # dimensions of the generated pictures for each filter.
-    img_width = cli_args.width
-    img_height = cli_args.height
+def visualize_conv_filters(model, layer, num_filters, img_width, img_height,
+                           max_filters=64, gradient_steps=20, step_size=1.0, save_pickle=False, load_pickle=False):
+    layer_name = layer.name
+    pickle_file = f"{layer_name}_filters.pickle"
 
-    model = load_model(cli_args.model_dir)
+    if load_pickle:
+        try:
+            kept_filters = pickle.load(open(pickle_file, "rb"))
+            print(f"Loaded filters from {pickle_file}")
+        except Exception as e:
+            print(f"Could not load filters pickle: {e}")
+            load_pickle = False  # fallback to compute filters
+
+    if not load_pickle:
+        kept_filters = []
+        intermediate = Model(inputs=model.input, outputs=layer.output)
+
+        for filter_index in range(min(num_filters, max_filters)):
+            print(f"Processing filter {filter_index} in layer {layer_name}")
+            start_time = time.time()
+
+            if K.image_data_format() == "channels_first":
+                input_shape = (1, 1, img_height, img_width)
+            else:
+                input_shape = (1, img_height, img_width, 1)
+
+            input_img_data = np.random.uniform(low=-0.5, high=0.5, size=input_shape).astype(np.float32)
+            input_img_data_tensor = tf.Variable(input_img_data)
+
+            for step in range(gradient_steps):
+                with tf.GradientTape() as tape:
+                    tape.watch(input_img_data_tensor)
+                    activation = intermediate(input_img_data_tensor)
+                    loss = tf.reduce_mean(activation[:, :, :, filter_index])
+
+                grads = tape.gradient(loss, input_img_data_tensor)
+                grads = grads / (tf.sqrt(tf.reduce_mean(tf.square(grads))) + 1e-5)
+                input_img_data_tensor.assign_add(grads * step_size)
+
+                if loss <= 0:
+                    print(f"Filter {filter_index} got stuck at step {step} with loss {loss.numpy()}")
+                    break
+
+            if loss > 0:
+                img = deprocess_image(input_img_data_tensor.numpy()[0])
+                kept_filters.append((img, loss.numpy()))
+            else:
+                print(f"Skipping filter {filter_index} due to non-positive loss")
+
+            end_time = time.time()
+            print(f"Filter {filter_index} processed in {int(end_time - start_time)}s")
+
+        if save_pickle:
+            pickle.dump(kept_filters, open(pickle_file, "wb"))
+            print(f"Saved filters to {pickle_file}")
+
+    kept_filters.sort(key=lambda x: x[1], reverse=True)
+    kept_filters = kept_filters[:max_filters]
+
+    stitched_filters = create_stitched_image(kept_filters, img_width, img_height)
+
+    output_img_name = f"{layer.name}_{int(sqrt(max_filters))}x{int(sqrt(max_filters))}.png"
+    output_path = os.path.join(output_dir, output_img_name)
+    imageio.imwrite(output_path, np.squeeze(stitched_filters))
+    print(f"Saved stitched image to {output_img_name}")
+
+def visualize_conv_layers(cli_args, config):
+    img_width = cli_args.width if cli_args.width else config["input_shape"][1]
+    img_height = cli_args.height if cli_args.height else config["input_shape"][0]
+
+    input_shape = tuple(config["input_shape"])
+    model = create_model(input_shape, config)
+
+    dummy_input = np.random.randn(1, *input_shape).astype(np.float32)
+    model(dummy_input)
+
+    model.compile(optimizer="adam", loss="categorical_crossentropy")
     model.summary()
 
-    # this is the placeholder for the input images
-    input_img = model.input
-
-    for layer in  model.layers:
-
-        if layer.name.startswith("conv"):
-
-            num_filters = layer.output_shape[3]
-            visualize_conv_filters(layer.name, num_filters, input_img, layer.output, img_width, img_height)
+    for layer in model.layers:
+        if "conv" in layer.name and hasattr(layer, "output") and layer.output is not None:
+            try:
+                intermediate_model = tf.keras.Model(inputs=model.input, outputs=layer.output)
+                num_filters = layer.output.shape[-1]
+                print(f"Visualizing layer {layer.name} with {num_filters} filters")
+                visualize_conv_filters(model, layer, num_filters,
+                                    img_width, img_height, max_filters=cli_args.num_filter,
+                                    gradient_steps=20, step_size=1.0,
+                                    save_pickle=cli_args.save_pickle, load_pickle=cli_args.load_pickle)
+            except Exception as e:
+                print(f"Skipping layer {layer.name} due to error: {e}")
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", dest="model_dir", required=True)
+    parser.add_argument('--config', dest='config', required=True)
     parser.add_argument("--layer", dest="layer_name", default="convolution2d_1")
-    parser.add_argument('--width', dest='width', default=500, type=int)
-    parser.add_argument('--height', dest='height', default=129, type=int)
-    parser.add_argument('--filter', dest='num_filter', default=200, type=int)
+    parser.add_argument('--width', dest='width', type=int)
+    parser.add_argument('--height', dest='height', type=int)
+    parser.add_argument('--filter', dest='num_filter', default=64, type=int)
+    parser.add_argument('--save_pickle', dest='save_pickle', default=False, action='store_true')
+    parser.add_argument('--load_pickle', dest='load_pickle', default=False, action='store_true')
     cli_args = parser.parse_args()
 
-    visualize_conv_layers(cli_args)
+    config_path = os.path.abspath(cli_args.config)
+    with open(config_path, "rb") as f:
+        config = yaml.load(f, Loader=yaml.SafeLoader)
+
+    visualize_conv_layers(cli_args, config)
