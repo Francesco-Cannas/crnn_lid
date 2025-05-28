@@ -7,7 +7,8 @@ from random import shuffle
 
 LABELS = {
     "english": 0,
-    "german": 1,
+    "italian": 1,
+    "sardinian": 2
 }
 
 def recursive_glob(path, pattern):

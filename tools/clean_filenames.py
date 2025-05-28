@@ -4,9 +4,9 @@ import shutil
 import argparse
 
 def clean(filename):
-    withOutIllegalChars = re.sub("[^a-zA-Z0-9\.-_ ]", "", filename)
-    withOutIllegalChars = withOutIllegalChars.replace("'", "")
-    return re.sub("[ ]{1,}", "_", withOutIllegalChars)
+    cleaned = re.sub(r"[^a-zA-Z0-9._\- ]", "", filename)
+    cleaned = cleaned.replace("'", "")
+    return re.sub(r"[ ]{1,}", "_", cleaned)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -21,5 +21,9 @@ if __name__ == '__main__':
             new_filepath = os.path.join(root, new_filename)
             old_filepath = os.path.join(root, filename)
 
-            # print "%s -> %s" % (old_filepath, new_filepath)
-            shutil.move(old_filepath, new_filepath)
+            if new_filepath != old_filepath:
+                if os.path.exists(new_filepath):
+                    print(f"⚠️ File esistente: {new_filepath}, salta.")
+                else:
+                    print(f"{old_filepath} -> {new_filepath}")
+                    shutil.move(old_filepath, new_filepath)

@@ -1,11 +1,8 @@
-#!/bin/bash
-
 set -e
 
 SCRIPT_ROOT="$(dirname $0)"
-SOUND_ROOT="/home/pva1/DeepAudio/iLID-Data"
+SOUND_ROOT="/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/..."
 
-#declare -a SOURCES=(youtube dubsmash voxforge)
 declare -a SOURCES=(youtube dubsmash voxforge)
 declare -a LANGUAGES=(german english)
 

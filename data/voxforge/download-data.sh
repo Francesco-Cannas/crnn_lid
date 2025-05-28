@@ -19,7 +19,7 @@ TEMP_DIR=tmp
 curl $VOXFORGE_DATA_URL | grep -o '<a .*href=.*>' | sed -e 's/<a /\n<a /g' | sed -e 's/<a .*href=['"'"'"]//' -e 's/["'"'"'].*$//' -e '/^$/ d' | grep tgz$ > $ZIPS
 
 count=0
-max_downloads=10
+max_downloads=15
 
 for ZIP in $(cat $ZIPS)
 do

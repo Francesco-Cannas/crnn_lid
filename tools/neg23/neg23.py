@@ -1,96 +1,95 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 import os
 import sys
-import re
 import subprocess
 import mimetypes
 
 
 def r128Stats(filePath):
-    """ takes a path to an audio file, returns a dict with the loudness
-    stats computed by the ffmpeg ebur128 filter """
-    ffargs = ['ffmpeg',
-              '-nostats',
-              '-i',
-              filePath,
-              '-filter_complex',
-              'ebur128',
-              '-f',
-              'null',
-              '-']
+    """Calcola le statistiche di loudness con il filtro ebur128 di ffmpeg"""
+    ffargs = [
+        'ffmpeg', '-nostats', '-i', filePath,
+        '-filter_complex', 'ebur128', '-f', 'null', '-'
+    ]
     proc = subprocess.Popen(ffargs, stderr=subprocess.PIPE)
-    stats = proc.communicate()[1]
-    summaryIndex = stats.rfind('Summary:')
-    summaryList = stats[summaryIndex:].split()
-    ILufs = float(summaryList[summaryList.index('I:') + 1])
-    IThresh = float(summaryList[summaryList.index('I:') + 4])
-    LRA = float(summaryList[summaryList.index('LRA:') + 1])
-    LRAThresh = float(summaryList[summaryList.index('LRA:') + 4])
-    LRALow = float(summaryList[summaryList.index('low:') + 1])
-    LRAHigh = float(summaryList[summaryList.index('high:') + 1])
-    statsDict = {'I': ILufs, 'I Threshold': IThresh, 'LRA': LRA,
-                 'LRA Threshold': LRAThresh, 'LRA Low': LRALow,
-                 'LRA High': LRAHigh}
-    return statsDict
+    stats = proc.communicate()[1].decode('utf-8', errors='replace')
 
+    summaryIndex = stats.rfind('Summary:')
+    if summaryIndex == -1:
+        raise ValueError("Non è stato trovato il blocco Summary nel log ffmpeg.")
+
+    summaryList = stats[summaryIndex:].split()
+
+    return {
+        'I': float(summaryList[summaryList.index('I:') + 1]),
+        'I Threshold': float(summaryList[summaryList.index('I:') + 4]),
+        'LRA': float(summaryList[summaryList.index('LRA:') + 1]),
+        'LRA Threshold': float(summaryList[summaryList.index('LRA:') + 4]),
+        'LRA Low': float(summaryList[summaryList.index('low:') + 1]),
+        'LRA High': float(summaryList[summaryList.index('high:') + 1])
+    }
 
 def linearGain(iLUFS, goalLUFS=-23):
-    """ takes a floating point value for iLUFS, returns the necessary
-    multiplier for audio gain to get to the goalLUFS value """
+    """Calcola il gain lineare per portare un file all'obiettivo LUFS"""
     gainLog = -(iLUFS - goalLUFS)
     return 10 ** (gainLog / 20)
 
 
 def ffApplyGain(inPath, outPath, linearAmount):
-    """ creates a file from inpath at outpath, applying a filter
-    for audio volume, multiplying by linearAmount """
-    ffargs = ['ffmpeg', '-y', '-i', inPath,
-              '-af', 'volume=' + str(linearAmount)]
-    if outPath[-4:].lower() == '.mp3':
+    """Applica il gain all'audio tramite ffmpeg"""
+    ffargs = ['ffmpeg', '-y', '-i', inPath, '-af', f'volume={linearAmount}']
+    if outPath.lower().endswith('.mp3'):
         ffargs += ['-acodec', 'libmp3lame', '-aq', '0']
-    ffargs += [outPath]
-    subprocess.Popen(ffargs, stderr=subprocess.PIPE)
+    ffargs.append(outPath)
+    subprocess.run(ffargs, stderr=subprocess.PIPE)
 
 
 def notAudio(filePath):
+    """Controlla se un file è audio in base a estensione/MIME"""
     if os.path.basename(filePath).startswith("audio"):
         return True
-    thisMime = mimetypes.guess_type(re.escape(filePath))[0]
-    if thisMime is None or not thisMime.startswith("audio"):
-        return True
-    return False
+    thisMime = mimetypes.guess_type(filePath)[0]
+    return thisMime is None or not thisMime.startswith("audio")
 
 
 def neg23Directory(directoryPath):
-    fileList = os.listdir(directoryPath)
-    for thisFile in fileList:
+    """Processa tutti i file audio nella directory"""
+    for thisFile in os.listdir(directoryPath):
         thisPath = os.path.join(directoryPath, thisFile)
         if notAudio(thisPath):
             continue
         neg23File(thisPath)
-    print "Batch complete."
-
+    print("Batch complete.")
 
 def neg23File(filePath):
+    """Processa un singolo file audio"""
     if notAudio(filePath):
-        print "Not a valid audio file."
+        print(f"'{filePath}' non è un file audio valido.")
         return False
-    print "Scanning " + filePath + " for loudness..."
+
+    print(f"Scanning {filePath} for loudness...")
+
     try:
         loudnessStats = r128Stats(filePath)
-    except:
-        print "neg23 encountered an error scanning " + filePath
+    except Exception as e:
+        print(f"Errore durante la scansione: {e}")
+        return False
+
     gainAmount = linearGain(loudnessStats['I'])
+
     outputDir = os.path.join(os.path.dirname(filePath), "neg23")
-    if not os.path.isdir(outputDir):
-        os.makedirs(outputDir)
+    os.makedirs(outputDir, exist_ok=True)
+
     outputPath = os.path.join(outputDir, os.path.basename(filePath))
-    print "Creating -23LUFS file at " + outputPath
+    print(f"Creazione del file normalizzato a -23 LUFS in: {outputPath}")
+
     try:
         ffApplyGain(filePath, outputPath, gainAmount)
-    except:
-        print "neg23 encountered an error applying gain to " + filePath
-    print "Done"
+    except Exception as e:
+        print(f"Errore durante l'applicazione del gain: {e}")
+        return False
+
+    print("Fatto.")
 
 
 if __name__ == "__main__":
@@ -100,11 +99,12 @@ if __name__ == "__main__":
         neg23Directory(os.getcwd())
     elif len(sys.argv) == 2 and os.path.isfile(sys.argv[1]):
         neg23File(sys.argv[1])
-    elif len(sys.argv) == 2 and os.path.isfile(os.path.join(os.getcwd(),
-                                                            sys.argv[1])):
+    elif len(sys.argv) == 2 and os.path.isfile(os.path.join(os.getcwd(), sys.argv[1])):
         neg23File(os.path.join(os.getcwd(), sys.argv[1]))
     else:
-        correctUsage = "Please provide a single file or directory.\n"
-        correctUsage += "Correct usage: neg23 somefile.wav OR "
-        correctUsage += "neg23 /directory/for/batch/processing/"
-        print correctUsage
+        correctUsage = (
+            "Uso corretto:\n"
+            "  neg23 somefile.wav\n"
+            "  neg23 /directory/da/processare/"
+        )
+        print(correctUsage)

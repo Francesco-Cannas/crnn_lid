@@ -25,7 +25,8 @@ def directory_to_spectrograms(args):
     # Each generator will scan a directory for audio files and convert them to spectrogram images
     # adjust this if you have other languages or any language is missing
     languages = ["english",
-                 "german"]
+                 "italian",
+                 "sardinian"]
 
     generators = [SpectrogramGenerator(os.path.join(source, language), config, shuffle=False, run_only_once=True) for language in languages]
 
