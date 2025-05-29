@@ -16,4 +16,4 @@ segment_length: 10  # number of seconds each spectogram represents
 pixel_per_second: 50
 
 label_names: ["EN", "IT", "SR"]
-num_classes: 2
+num_classes: 3

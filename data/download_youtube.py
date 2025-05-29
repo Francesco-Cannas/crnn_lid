@@ -11,7 +11,7 @@ file_counter = Counter()
 
 def read_yaml(file_name):
     with open(file_name, "r") as f:
-        return yaml.load(f)
+       return yaml.load(f, Loader=yaml.SafeLoader)
 
 
 def clean_filename(filename):
@@ -28,18 +28,24 @@ def download(language, source, source_name, source_type):
     if source_type == "playlist":
         playlist_archive = os.path.join(output_path_raw, "archive.txt")
 
-        print "Downloading {0} {1} to {2}".format(source_type, source_name, output_path_raw)
+        print(f"Downloading {source_type} {source_name} to {output_path_raw}")
         command = """youtube-dl -i --download-archive {} --max-filesize 50m --no-post-overwrites --max-downloads {} --extract-audio --audio-format wav {} -o "{}/%(title)s.%(ext)s" """.format(
             playlist_archive, args.max_downloads, source, output_path_raw)
-        subprocess.call(command, shell=True)
+        try:
+            subprocess.run(command, shell=True, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Errore durante l'esecuzione del comando:\n{command}\n{e}")
+
     else:       
         if os.path.exists(output_path_raw):
-            print "skipping {0} because the target folder already exists".format(output_path_raw)
+            print (f"skipping {output_path_raw} because the target folder already exists")
         else:
-            print "Downloading {0} {1} to {2}".format(source_type, source_name, output_path_raw)
+            print(f"Downloading {source_type} {source_name} to {output_path_raw}")
             command = """youtube-dl -i --max-downloads {} --extract-audio --audio-format wav {} -o "{}/%(title)s.%(ext)s" """.format(args.max_downloads, source, output_path_raw)
-            subprocess.call(command, shell=True)
-
+            try:
+                subprocess.run(command, shell=True, check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Errore durante l'esecuzione del comando:\n{command}\n{e}")
 
     # Use ffmpeg to convert and split WAV files into 10 second parts
     output_path_segmented = os.path.join(args.output_path, "segmented", language, source_name)
@@ -52,7 +58,6 @@ def download(language, source, source_name, source_type):
         files = glob.glob(os.path.join(output_path_raw, "*.wav"))
 
         for f in files:
-
             cleaned_filename = clean_filename(os.path.basename(f))
             cleaned_filename = cleaned_filename[:-4]
 
@@ -64,29 +69,32 @@ def download(language, source, source_name, source_type):
             output_filename = os.path.join(output_path_segmented, cleaned_filename + "_%03d.wav")
 
             command = ["ffmpeg", "-y", "-i", f, "-map", "0", "-ac", "1", "-ar", "16000", "-f", "segment", "-segment_time", "10", output_filename]
-            subprocess.call(command)
+            try:
+                subprocess.run(command, check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Errore durante l'esecuzione del comando:\n{command}\n{e}")
 
     file_counter[language] += len(glob.glob(os.path.join(output_path_segmented, "*.wav")))
-
-
 
 def download_user(language, user):
     user_selector = "ytuser:%s" % user
     download(language, user_selector, user, "user")
 
-
 def download_playlist(language, playlist_name, playlist_id):
     download(language, playlist_id, playlist_name, "playlist")
 
-
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
-    parser.add_argument('--output', dest='output_path', default=os.getcwd(), required=True)
-    parser.add_argument('--downloads', dest='max_downloads', default=1200)
+    parser.add_argument('--output', dest='output_path', default=os.getcwd())
+    parser.add_argument('--downloads', dest='max_downloads', type=int, default=1200)
     args = parser.parse_args()
 
-    sources = read_yaml("sources.yml")
+    try:
+        sources = read_yaml("sources.yml")
+    except Exception as e:
+        print(f"Error loading YAML: {e}")
+        exit(1)
+
     for language, categories in sources.items():
         for user in categories["users"]:
             if user is None:
@@ -104,4 +112,4 @@ if __name__ == '__main__':
 
     create_csv(os.path.join(args.output_path, "segmented"))
 
-    print file_counter
+    print(file_counter)

@@ -47,7 +47,6 @@ def create_csv(root_dir, train_validation_split=0.8, train_csv_path=None, val_cs
     num_train = int(smallest_count * (train_validation_split - 0.1))
     num_validation = smallest_count - num_train - num_test
 
-
     # Split datasets and shuffle languages
     training_set = []
     validation_set = []
