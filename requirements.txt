@@ -5,6 +5,7 @@ Markdown
 Pillow
 PyYAML
 bleach
+fpdf
 funcsigs
 h5py
 html5lib
@@ -21,6 +22,7 @@ pydub
 requests
 scikit-learn
 scipy
+seaborn
 selenium
 six
 sox

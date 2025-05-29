@@ -18,25 +18,27 @@ class CSVLoader(object):
                 self.images_label_pairs.append((file_path, int(label)))
 
     def get_data(self, should_shuffle=True, is_prediction=False, return_labels=False):
+        data_pairs = self.images_label_pairs.copy()
 
-        start = 0
+        if should_shuffle:
+            np.random.shuffle(data_pairs)
 
-        while True:
-            data_batch = np.zeros((self.config["batch_size"], ) + self.input_shape)
-            label_batch = np.zeros((self.config["batch_size"], self.config["num_classes"]))
+        total_files = len(data_pairs)
+        batch_size = self.config["batch_size"]
 
-            for i, (file_path, label) in enumerate(self.images_label_pairs[start:start + self.config["batch_size"]]):
+        for start in range(0, total_files, batch_size):
+            end = min(start + batch_size, total_files)
+            current_batch = data_pairs[start:end]
+
+            actual_batch_size = len(current_batch)
+            data_batch = np.zeros((actual_batch_size, ) + self.input_shape)
+            label_batch = np.zeros((actual_batch_size, self.config["num_classes"]))
+
+            for i, (file_path, label) in enumerate(current_batch):
                 data = self.process_file(file_path)
                 height, width, channels = data.shape
                 data_batch[i, :height, :width, :] = data
                 label_batch[i, :] = to_categorical([label], num_classes=self.config["num_classes"])
-
-            start += self.config["batch_size"]
-
-            if start + self.config["batch_size"] > self.get_num_files():
-                start = 0
-                if should_shuffle:
-                    np.random.shuffle(self.images_label_pairs)
 
             if is_prediction:
                 if return_labels:
@@ -54,7 +56,9 @@ class CSVLoader(object):
         return len(self.images_label_pairs)
 
     def get_num_batches(self):
-        return len(self.images_label_pairs) // self.config["batch_size"]
+        total_files = len(self.images_label_pairs)
+        batch_size = self.config["batch_size"]
+        return (total_files + batch_size - 1) // batch_size 
     
     def get_labels(self):
         return [label for (file_path, label) in self.images_label_pairs]
