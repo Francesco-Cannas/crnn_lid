@@ -61,7 +61,6 @@ class SpectrogramGenerator(object):
         if errors:
             print(errors)
 
-        # image = Image.open(StringIO(output))
         image = Image.open(file_name)
         os.remove(file_name)
         return np.array(image)
@@ -113,7 +112,7 @@ class SpectrogramGenerator(object):
 if __name__ == "__main__":
 
     a = SpectrogramGenerator("/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/data/voxforge", 
-        {"pixel_per_second": 50, "input_shape": [129, 100, 1], "batch_size": 32, "num_classes": 3}, shuffle=True)
+        {"pixel_per_second": 50, "input_shape": [129, 100, 1], "batch_size": 32, "num_classes": 4}, shuffle=True)
     gen = a.get_generator()
 
     for a in gen:

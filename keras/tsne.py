@@ -1,5 +1,6 @@
 import argparse
 import os
+import math
 import numpy as np
 import yaml
 import data_loaders
@@ -81,7 +82,7 @@ def visualize_cluster(cli_args):
     model = create_model(input_shape, config)
     model.compile(optimizer="adam", loss="categorical_crossentropy")
 
-    steps = max(1, data_generator.get_num_files() // config["batch_size"])
+    steps = math.ceil(data_generator.get_num_files() / config["batch_size"])
     probabilities = model.predict(
         data_generator.get_data(should_shuffle=False, is_prediction=True),
         steps=steps,

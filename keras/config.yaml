@@ -4,7 +4,7 @@ test_data_dir: "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/test_data_dir/testi
 
 batch_size: 64
 learning_rate: 0.0005
-num_epochs: 20
+num_epochs: 60
 
 data_loader: "ImageLoader"
 color_mode: "L"  # L = bw or RGB
@@ -15,5 +15,5 @@ model: "topcoder_crnn_finetune"
 segment_length: 10  # number of seconds each spectogram represents
 pixel_per_second: 50
 
-label_names: ["EN", "IT", "SR"]
-num_classes: 3
+label_names: ["EN", "IT", "SP", "SR"]
+num_classes: 4

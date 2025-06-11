@@ -15,7 +15,8 @@ class DirectoryLoader(object):
         self.generators = [
             SpectrogramGenerator(os.path.join(self.source_directory, "english"), config, shuffle=shuffle),
             SpectrogramGenerator(os.path.join(self.source_directory, "italian"), config, shuffle=shuffle),
-            SpectrogramGenerator(os.path.join(self.source_directory, "sardinian"), config, shuffle=shuffle),
+             SpectrogramGenerator(os.path.join(self.source_directory, "spanish"), config, shuffle=shuffle),
+            SpectrogramGenerator(os.path.join(self.source_directory, "sardinian"), config, shuffle=shuffle)
         ]
 
         self.generator_queues = [SpectrogramGen.get_generator() for SpectrogramGen in self.generators]
@@ -52,7 +53,7 @@ class DirectoryLoader(object):
 
 if __name__ == "__main__":
     a = DirectoryLoader("/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/data/spectrograms",
-                        {"pixel_per_second": 50, "input_shape": [129, 200, 1], "batch_size": 32, "num_classes": 3},
+                        {"pixel_per_second": 50, "input_shape": [129, 200, 1], "batch_size": 32, "num_classes": 4},
                         shuffle=True)
     print(a.get_num_files())
    

@@ -14,7 +14,7 @@ def create_model(input_shape, config):
         layer.trainable = False
 
     x = inception_model.output
-    #x = GlobalAveragePooling2D()(x)
+    # x = GlobalAveragePooling2D()(x)
 
     # (bs, y, x, c) --> (bs, x, y, c)
     x = Permute((2, 1, 3))(x)

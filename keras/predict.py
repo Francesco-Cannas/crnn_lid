@@ -7,7 +7,7 @@ from data_loaders.SpectrogramGenerator import SpectrogramGenerator
 
 def predict(cli_args):
 
-    config = {"pixel_per_second": 50, "input_shape": [129, 200, 1], "num_classes": 2, "label_names": ["EN", "DE"]}
+    config = {"pixel_per_second": 50, "input_shape": [129, 200, 1], "num_classes": 4, "label_names": ["EN", "IT", "SP", "SR"]}
     class_labels = config["label_names"]
 
     data_generator = SpectrogramGenerator(cli_args.input_file, config, shuffle=False, run_only_once=True).get_generator()

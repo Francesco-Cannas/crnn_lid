@@ -26,6 +26,7 @@ def directory_to_spectrograms(args):
     # adjust this if you have other languages or any language is missing
     languages = ["english",
                  "italian",
+                 "spanish",
                  "sardinian"]
 
     generators = [SpectrogramGenerator(os.path.join(source, language), config, shuffle=False, run_only_once=True) for language in languages]
