@@ -11,21 +11,6 @@ voxforge/download-data.sh
 voxforge/extract_tgz.sh {path_to_german.tgz} german
 ```
 
-### Youtube
-- Downloads various news channels from YouTube.
-- Configure channels/sources in `/data/sources.yml`
-
-```python
-python download_youtube.py
-```
-
-### European Speech Repository
-- Downloads various speeches and press conferences from [European Speech Repository](https://webgate.ec.europa.eu/sr/).
-
-```python
-python /data/download_europe_speech_repository.py
-```
-
 ## Convert Audio Files to Spectrograms
 
 After you've downloaded the audio files you can convert them to spectogram images.

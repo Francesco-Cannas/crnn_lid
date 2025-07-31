@@ -13,8 +13,7 @@ This repository contains the code for the paper "Language Identification Using D
   - More below
 - **/tools**
   - Some handy scripts to clean filenames, normalize audio files and other stuff.
-- **/web-server**
-  - A demo project for language identification. A small web server with a REST interface for classification and a small web frontend to upload audio files. For more information see README in that folder.
+
 
 ## Requirements
 
