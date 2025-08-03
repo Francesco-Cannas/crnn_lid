@@ -1,103 +1,84 @@
-import os
-import argparse
-import fnmatch
-import math
 import itertools
-from random import shuffle
+import random
+from pathlib import Path
 
 LABELS = {
     "english": 0,
     "italian": 1,
     "spanish": 2,
-    "sardinian": 3
+    "sardinian": 3,
 }
 
-def recursive_glob(path, pattern):
-    for root, dirs, files in os.walk(path):
-        for basename in files:
-            if fnmatch.fnmatch(basename, pattern):
-                filename = os.path.abspath(os.path.join(root, basename))
-                if os.path.isfile(filename):
-                    yield filename
+
+def recursive_glob(root: Path, pattern: str):
+    for file in root.rglob(pattern):
+        if file.is_file():
+            yield file.resolve()
 
 
-def get_immediate_subdirectories(path):
-    return [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
+def get_immediate_subdirectories(path: Path):
+    return [d for d in path.iterdir() if d.is_dir()]
 
 
-def create_csv(root_dir, train_validation_split=0.8, train_csv_path=None, val_csv_path=None, test_csv_path=None):
-    languages = [lang for lang in get_immediate_subdirectories(root_dir) if lang in LABELS]
-    counter = {}
-    file_names = {}
+def create_csv(
+        root_dir: str | Path,
+        train_validation_split: float = 0.8,
+        train_csv_path: str | Path | None = None,
+        val_csv_path: str | Path | None = None,
+        test_csv_path: str | Path | None = None,
+):
+    root_dir = Path(root_dir)
+    languages = [d.name for d in get_immediate_subdirectories(root_dir) if d.name in LABELS]
 
-    # Count all files for each language
+    counters: dict[str, int] = {}
+    file_names: dict[str, list[Path]] = {}
+
     for lang in languages:
-        print(lang)
-        files = list(recursive_glob(os.path.join(root_dir, lang), "*.wav"))
-        files.extend(recursive_glob(os.path.join(root_dir, lang), "*.png"))
-        num_files = len(files)
-
+        files = list(recursive_glob(root_dir / lang, "*.wav"))
+        files.extend(recursive_glob(root_dir / lang, "*.png"))
+        counters[lang] = len(files)
         file_names[lang] = files
-        counter[lang] = num_files
 
-    # Calculate train / validation split
-    print(counter)
-    smallest_count = min(counter.values())
+    smallest = min(counters.values())
 
-    num_test = int(smallest_count * 0.1)
-    num_train = int(smallest_count * (train_validation_split - 0.1))
-    num_validation = smallest_count - num_train - num_test
+    num_test = int(smallest * 0.1)
+    num_train = int(smallest * (train_validation_split - 0.1))
+    num_val = smallest - num_train - num_test
 
-    # Split datasets and shuffle languages
-    training_set = []
-    validation_set = []
-    test_set = []
+    train, val, test = [], [], []
 
     for lang in languages:
         label = LABELS[lang]
-        training_set += zip(file_names[lang][:num_train], itertools.repeat(label))
-        validation_set += zip(file_names[lang][num_train:num_train + num_validation], itertools.repeat(label))
-        test_set += zip(file_names[lang][num_train + num_validation:num_train + num_validation + num_test], itertools.repeat(label))
+        train += zip(file_names[lang][:num_train], itertools.repeat(label))
+        val += zip(file_names[lang][num_train: num_train + num_val], itertools.repeat(label))
+        test += zip(file_names[lang][num_train + num_val: num_train + num_val + num_test], itertools.repeat(label))
 
-    shuffle(training_set)
-    shuffle(validation_set)
-    shuffle(test_set)
+    random.shuffle(train)
+    random.shuffle(val)
+    random.shuffle(test)
 
-    if train_csv_path is None:
-        train_csv_path = os.path.join(root_dir, "training.csv")
-    if val_csv_path is None:
-        val_csv_path = os.path.join(root_dir, "validation.csv")
-    if test_csv_path is None:
-        test_csv_path = os.path.join(root_dir, "testing.csv")
+    train_csv_path = Path(train_csv_path or root_dir / "training.csv")
+    val_csv_path = Path(val_csv_path or root_dir / "validation.csv")
+    test_csv_path = Path(test_csv_path or root_dir / "testing.csv")
 
-    os.makedirs(os.path.dirname(train_csv_path), exist_ok=True)
-    os.makedirs(os.path.dirname(val_csv_path), exist_ok=True)
-    os.makedirs(os.path.dirname(test_csv_path), exist_ok=True)
+    for p in (train_csv_path, val_csv_path, test_csv_path):
+        p.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(train_csv_path, "w") as train_file:
-        for (filename, label) in training_set:
-            train_file.write(f"{filename}, {label}\n")
+    for dataset, path in ((train, train_csv_path), (val, val_csv_path), (test, test_csv_path)):
+        with path.open("w") as f:
+            for fname, lbl in dataset:
+                f.write(f"{fname},{lbl}\n")
 
-    with open(val_csv_path, "w") as val_file:
-        for (filename, label) in validation_set:
-            val_file.write(f"{filename}, {label}\n")
-
-    with open(test_csv_path, "w") as test_file:
-        for (filename, label) in test_set:
-            test_file.write(f"{filename}, {label}\n")
-
-    # Stats
-    print("[Training]   Files per language: {} Total: {}".format(num_train, num_train * len(languages)))
-    print("[Validation] Files per language: {} Total: {}".format(num_validation, num_validation * len(languages)))
-    print("[Testing]    Files per language: {} Total: {}".format(num_test, num_test * len(languages)))
+    print(f"[Training]   Files per language: {num_train} Total: {num_train * len(languages)}")
+    print(f"[Validation] Files per language: {num_val} Total: {num_val * len(languages)}")
+    print(f"[Testing]    Files per language: {num_test} Total: {num_test * len(languages)}")
 
 
-if __name__ == '__main__':
-
-    root_dir = "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/data/spectrograms"
-
-    train_data_dir = "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/train_data_dir/training.csv"
-    validation_data_dir = "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/validation_data_dir/validation.csv"
-    test_data_dir = "/mnt/c/Users/fraca/Documents/GitHub/crnn-lid/test_data_dir/testing.csv"
-
-    create_csv(root_dir, train_validation_split=0.8, train_csv_path=train_data_dir, val_csv_path=validation_data_dir, test_csv_path=test_data_dir)
+if __name__ == "__main__":
+    root = Path("C:/Users/fraca/Documents/GitHub/crnn_lid/data/spectrograms")
+    create_csv(
+        root,
+        train_csv_path="C:/Users/fraca/Documents/GitHub/crnn_lid/train_data_dir/training.csv",
+        val_csv_path="C:/Users/fraca/Documents/GitHub/crnn_lid/validation_data_dir/validation.csv",
+        test_csv_path="C:/Users/fraca/Documents/GitHub/crnn_lid/test_data_dir/testing.csv",
+    )

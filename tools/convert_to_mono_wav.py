@@ -1,6 +1,6 @@
+import argparse
 import os
 import subprocess
-import argparse
 
 filetypes_to_convert = [".mp3", ".m4a", ".webm"]
 

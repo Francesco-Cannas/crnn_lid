@@ -1,12 +1,13 @@
+import argparse
 import os
 import re
 import shutil
-import argparse
+
 
 def clean(filename):
     cleaned = re.sub(r"[^a-zA-Z0-9._\- ]", "", filename)
     cleaned = cleaned.replace("'", "")
-    return re.sub(r"[ ]{1,}", "_", cleaned)
+    return re.sub(r"''{1,+}", "_", cleaned)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

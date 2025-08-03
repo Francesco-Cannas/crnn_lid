@@ -1,12 +1,10 @@
-#!/usr/bin/env python3
-import os
-import sys
-import subprocess
 import mimetypes
+import os
+import subprocess
+import sys
 
 
 def r128Stats(filePath):
-    """Calcola le statistiche di loudness con il filtro ebur128 di ffmpeg"""
     ffargs = [
         'ffmpeg', '-nostats', '-i', filePath,
         '-filter_complex', 'ebur128', '-f', 'null', '-'
@@ -30,13 +28,11 @@ def r128Stats(filePath):
     }
 
 def linearGain(iLUFS, goalLUFS=-23):
-    """Calcola il gain lineare per portare un file all'obiettivo LUFS"""
     gainLog = -(iLUFS - goalLUFS)
     return 10 ** (gainLog / 20)
 
 
 def ffApplyGain(inPath, outPath, linearAmount):
-    """Applica il gain all'audio tramite ffmpeg"""
     ffargs = ['ffmpeg', '-y', '-i', inPath, '-af', f'volume={linearAmount}']
     if outPath.lower().endswith('.mp3'):
         ffargs += ['-acodec', 'libmp3lame', '-aq', '0']
@@ -45,7 +41,6 @@ def ffApplyGain(inPath, outPath, linearAmount):
 
 
 def notAudio(filePath):
-    """Controlla se un file è audio in base a estensione/MIME"""
     if os.path.basename(filePath).startswith("audio"):
         return True
     thisMime = mimetypes.guess_type(filePath)[0]
@@ -53,7 +48,6 @@ def notAudio(filePath):
 
 
 def neg23Directory(directoryPath):
-    """Processa tutti i file audio nella directory"""
     for thisFile in os.listdir(directoryPath):
         thisPath = os.path.join(directoryPath, thisFile)
         if notAudio(thisPath):
@@ -62,7 +56,6 @@ def neg23Directory(directoryPath):
     print("Batch complete.")
 
 def neg23File(filePath):
-    """Processa un singolo file audio"""
     if notAudio(filePath):
         print(f"'{filePath}' non è un file audio valido.")
         return False
@@ -90,6 +83,7 @@ def neg23File(filePath):
         return False
 
     print("Fatto.")
+    return True
 
 
 if __name__ == "__main__":

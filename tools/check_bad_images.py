@@ -1,8 +1,9 @@
-import numpy as np
-import imageio.v3 as imageio
-import os
 import argparse
 import csv
+
+import imageio.v3 as imageio
+import numpy as np
+
 
 def main(args):
     with open(args.csv_input, "r", newline='') as csv_file:

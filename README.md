@@ -1,84 +1,75 @@
-# Language Identification Using Deep Convolutional Recurrent Neural Networks
+# CRNN-LID – Language Identification basato su CRNN  
 
-This repository contains the code for the paper "Language Identification Using Deep Convolutional Recurrent Neural Networks", which will be presented at the 24th International Conference on Neural Information Processing (ICONIP 2017).
+---
 
-## Structure of the Repository
+## 1 · Panoramica
+Il progetto implementa un sistema di **Language Identification (LID)** che trasforma l’audio in spettrogrammi, li elabora con reti **Convolutional + Recurrent (CRNN)** e restituisce la lingua parlata.
 
-- **/data**
-  - Scripts to download training data from Voxforge, European Parliament Speech Repository and YouTube. For usage details see the README in that folder.
-- **/keras**
-  - All the code for setting up and training various models with Keras/Tensorflow.
-  - Includes training and prediction script. See `train.py` and `predict.py`.
-  - Configure your learning parameters in `config.yaml`.
-  - More below
-- **/tools**
-  - Some handy scripts to clean filenames, normalize audio files and other stuff.
+**Lingue supportate (label predefinite)**  
+| Codice | Lingua | Dataset di origine |
+|--------|--------|--------------------|
+| `EN`   | Inglese | VoxForge |
+| `IT`   | Italiano | VoxForge |
+| `SP`   | Spagnolo | VoxForge |
+| `SR`   | Sardo (Sardinian) | VoxForge |
 
+Puoi ampliare il numero di lingue aggiungendo altri CSV/ cartelle spettrogrammi e aggiornando `keras/config.yaml` (chiavi `label_names` e `num_classes`).
 
-## Requirements
+---
 
-You can install all python requirements with `pip install -r requirements.txt` in the respective folders. You will additionally need to install the following software:
-- youtube_dl
-- sox
+## 2 · Struttura del repository
 
-## Models
+| Cartella / file                                                 | Contenuto principale | Note operative |
+|-----------------------------------------------------------------|----------------------|----------------|
+| **`/manage/`**                                                  | Tutto il codice di training, inferenza e valutazione | vedi § 3 |
+| **`/manage/models/`**                                           | Architetture: `crnn.py`, `topcoder_crnn*.py`, `inceptionv3_crnn.py`, `resnet.py`, … | seleziona il modello tramite `config.yaml → model` |
+| **`/manage/data_loaders/`**                                     | Loader & generatori: `ImageLoader`, `DirectoryLoader`, `SpectrogramGenerator`, … | si specifica con `config.yaml → data_loader` |
+| **`/data/`**                                                    | Script per scaricare corpora e generare spettrogrammi (`wav_to_spectrogram.py`, `create_csv.py`) | serve SoX installato |
+| **`/tools/`**                                                   | Utility varie su file audio (pulizia nomi, normalizzazione, check immagini, …) | script CLI autonomi |
+| **`train_data_dir/`, `validation_data_dir/`, `test_data_dir/`** | CSV con `<path_spettrogramma,label>` | usati dai loader |
+| **`keras/config.yaml`**                                         | Hyper-parametri, percorsi, mapping etichette | 🔑 file di configurazione centrale |
+| **`requirements.txt`**                                          | Dipendenze Python (versioni da pin-nare) | consigliato virtualenv |
+| **`LICENSE`**                                                   | MIT | |
 
-The repository contains a model for 4 languages (English, German, French, Spanish) and a model for 6 languages (English, German, French, Spanish, Chinese, Russian). You can find these models in the folder `web-server/model`.
+---
 
+## 3 · Script CLI & comandi di esempio
 
-#### Training & Prediction
+| Script                                                                                                                                    | Descrizione | Comando base |
+|-------------------------------------------------------------------------------------------------------------------------------------------|-------------|--------------|
+| **`manage/train.py`**                                                                                                                     | Addestra un modello da zero o finetune da pesi `.h5`  | `python manage/train.py --config manage/config.yaml [--weights start_weights.h5]` |
+| **`manage/evaluate.py`**                                                                                                                   | Valuta un modello salvato, genera <br>‣ accuracy / precision / recall / F1<br>‣ matrice di confusione PNG<br>‣ curve ROC PNG<br>‣ report PDF | `python manage/evaluate.py --model trained_model.h5 --config manage/config.yaml [--testset]` |
+| **`manage/predict.py`**                                                                                                                    | Predice lingua di **un singolo file audio** (qualsiasi formato gestito da SoX) | `python manage/predict.py --model trained_model.h5 --input speech.wav` |
+| **`manage/tsne.py`**                                                                                                                       | Proietta features del penultimo layer in 2-D con t-SNE e salva scatter-plot | `python manage/tsne.py --model trained_model.h5 --config manage/config.yaml` |
+| **`manage/visualize_conv.py`**                                                                                                             | Visualizza feature-maps di un layer convoluzionale | `python manage/visualize_conv.py --model trained_model.h5 --layer 3 --input sample.png` |
+| **`data/wav_to_spectrogram.py`**                                                                                                          | Converte `.wav` → spettrogramma `.png` tramite SoX | `python data/wav_to_spectrogram.py --input wav_dir --output spec_dir` |
+| **`data/create_csv.py`**                                                                                                                  | Genera CSV `<path,label>` da cartelle di spettrogrammi | `python data/create_csv.py --input spec_dir --output train.csv --label EN` |
+| **`tools/convert_to_mono_wav.py`**                                                                                                        | Converte audio multi-canale→mono WAV (16 kHz) | `python tools/convert_to_mono_wav.py --input raw_dir --output mono_dir` |
+| *(altri script in `tools/` come `clean_filenames.py`, `check_bad_images.py`, `audio_length.py`, ecc. sono self-documentati via `--help`)* | | |
 
-To start a training run, go into the `keras` directory, set all the desired properties and hyperparameters in the config.yaml file and train with Keras:
-```
-python train.py --config <config.yaml>
-```
+> Tutti gli script hanno `--help` con dettagli parametri.
 
-To predict a single audio file run:
-```
-python predict.py --model <path/to/model> --input <path/to/speech.mp3>
-```
-Audio files can be in any format understood by SoX. The pretrained model files need to be caomptible with Keras v1.
+---
 
-To evaluate a trained model you can run:
-```
-python evaluate.py --model <path/to/model> --config <config.yaml> --testset True
-```
+## 4 · Configurazione dettagliata (`keras/config.yaml`)
 
-You can also create a visualisation of the clusters the model is able to produce by using our `tsne.py` script:
-```
-python tsne.py --model <path/to/model> --config <config.yaml>
-```
-In case you are interested in creating a visualization of what kind of patterns excite certain layers the most, you can create such a visualization with the following command:
-```
-python visualize_conv.py --model <path/to/model>
-```
+```yaml
+train_data_dir: "train_data_dir/training.csv" # CSV <path,label>
+validation_data_dir: "validation_data_dir/validation.csv"
+test_data_dir: "test_data_dir/testing.csv"
 
-#### Labels
-```
-0 English,
-1 German,
-2 French,
-3 Spanish,
-4 Mandarin Chinese,
-5 Russian
-```
+batch_size: 
+learning_rate: 
+num_epochs:
 
-## LICENSE
+data_loader: scegli uno dei loader in /keras/data_loaders
+color_mode: "L"=grayscale, "RGB"=color
+input_shape: [H, W, C]
 
-GPLv3 see `LICENSE` for more information.
+model: scegli modello da /keras/models
 
-## Citation
+segment_length: secondi per spettrogramma
+pixel_per_second: risoluzione “orizzontale”
 
-If you find this code useful, please cite our paper:
-
-```
-@inproceedings{crnn-lid,
-  title={Language Identification Using Deep Convolutional Recurrent Neural Networks},
-  author={Bartz, Christian and Herold, Tom and Yang, Haojin and Meinel, Christoph},
-  booktitle={International Conference on Neural Information Processing},
-  pages={880--889},
-  year={2017},
-  organization={Springer}
-}
-```
-
+label_names: 
+num_classes:
