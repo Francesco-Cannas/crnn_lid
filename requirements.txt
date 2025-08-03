@@ -1,6 +1,5 @@
 fpdf
 Jinja2>=3.1.6
-Keras
 h5py
 imageio
 librosa

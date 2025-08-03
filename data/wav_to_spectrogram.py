@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-import imageio.v2 as imageio
+import imageio.v3 as imageio
 import numpy as np
 
 from crnn_lid.manage.data_loaders.SpectrogramGenerator import SpectrogramGenerator
