@@ -12,6 +12,9 @@ from sklearn.manifold import TSNE
 
 matplotlib.use("pdf")
 
+OUTPUT_DIR = Path(r"C:/Users/fraca/Documents/GitHub/crnn_lid/manage").resolve()
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
 
 def _plot_with_labels(low_d, labels, label_names, out_path: Path) -> None:
     df = DataFrame({"x": low_d[:, 0], "y": low_d[:, 1], "label": labels})
@@ -116,11 +119,10 @@ def visualize_cluster(args) -> None:
     files_subset = all_files[:num_samples]
     print(f"Using {num_samples} samples for t-SNE")
 
-    plot_path = Path(args.plot).resolve()
-    plot_path.parent.mkdir(parents=True, exist_ok=True)
-    np.savetxt(plot_path.parent / "probabilities.tsv", probs, delimiter="\t")
+    plot_path = OUTPUT_DIR / args.plot
+    np.savetxt(OUTPUT_DIR / "probabilities.tsv", probs, delimiter="\t")
     DataFrame({"label": labels, "filename": files_subset}).to_csv(
-        plot_path.parent / "metadata.tsv", sep="\t", index=False
+        OUTPUT_DIR / "metadata.tsv", sep="\t", index=False
     )
 
     tsne = TSNE(
@@ -140,7 +142,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", help="Checkpoint .pth del modello")
     parser.add_argument("--config", required=True, help="Path al config.yaml")
-    parser.add_argument("--plot", default="tsne.pdf", help="Output plot (PDF)")
+    parser.add_argument(
+        "--plot",
+        default="tsne.pdf",
+        help="Nome file plot (sarà salvato in OUTPUT_DIR)",
+    )
     parser.add_argument("--limit", type=int, default=2000, help="Max campioni")
     parser.add_argument("--iter", type=int, default=4000, help="Iterazioni t-SNE")
     args = parser.parse_args()

@@ -19,6 +19,6 @@ seaborn
 timm
 torch==2.7.0
 torchaudio==2.7.0
-torchvision==0.22.0
 torchmetrics
+torchvision==0.22.0
 tqdm
