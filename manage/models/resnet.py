@@ -1,3 +1,5 @@
+from typing import cast
+
 import torch.nn as nn
 from torchvision.models import resnet50
 
@@ -10,8 +12,8 @@ def _adapt_first_conv(model, in_chans: int):
     model.conv1 = nn.Conv2d(
         in_chans,
         old_conv.out_channels,
-        kernel_size=old_conv.kernel_size,
-        stride=old_conv.stride,
+        kernel_size=cast(tuple[int, int], old_conv.kernel_size),
+        stride=cast(tuple[int, int], old_conv.stride),
         padding=old_conv.padding,
         bias=old_conv.bias is not None,
     )

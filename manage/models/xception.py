@@ -7,8 +7,8 @@ def create_model(input_shape, config):
     num_classes = config["num_classes"]
 
     model = timm.create_model(
-        "xception",
-        pretrained=False,          # carica pesi casuali; metti True se hai internet/pesi
+        "xception71",
+        pretrained=True,
         in_chans=in_chans,
         num_classes=num_classes,
     )

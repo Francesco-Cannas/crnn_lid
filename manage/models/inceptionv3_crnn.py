@@ -1,3 +1,5 @@
+from typing import cast
+
 import torch
 import torch.nn as nn
 from torchvision.models import inception_v3
@@ -7,12 +9,14 @@ NAME = "Inceptionv3_CRNN"
 def _adapt_first_conv(net: nn.Module, in_chans: int) -> nn.Module:
     if in_chans == 3:
         return net
+
     old = net.Conv2d_1a_3x3.conv
+
     net.Conv2d_1a_3x3.conv = nn.Conv2d(
         in_chans,
         old.out_channels,
-        kernel_size=old.kernel_size,
-        stride=old.stride,
+        kernel_size=cast(tuple[int, int], old.kernel_size),
+        stride=cast(tuple[int, int], old.stride),
         padding=old.padding,
         bias=old.bias is not None,
     )
