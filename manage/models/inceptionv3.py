@@ -1,7 +1,7 @@
 from typing import cast
 
 import torch.nn as nn
-from torchvision.models import inception_v3
+from torchvision.models import inception_v3, Inception_V3_Weights
 
 NAME = "InceptionV3"
 
@@ -24,10 +24,20 @@ def _adapt_first_conv(net: nn.Module, in_chans: int) -> nn.Module:
 
 def create_model(input_shape, config):
     in_ch, _, _ = input_shape
-    net = inception_v3(weights=None, aux_logits=False)
+
+    transform_input = (in_ch == 3)
+    net = inception_v3(
+        weights=Inception_V3_Weights.DEFAULT,
+        aux_logits=True,
+        transform_input=transform_input
+    )
+
     net = _adapt_first_conv(net, in_ch)
 
+    net.AuxLogits = None
+    net.aux_logits = False
 
     num_ftrs = net.fc.in_features
     net.fc = nn.Linear(num_ftrs, config["num_classes"])
+
     return net
