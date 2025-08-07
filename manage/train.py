@@ -84,25 +84,32 @@ def _render_text_page(pdf: PdfPages, lines: List[str]):
     plt.close(fig)
 
 
-def _plot_confusion(cm: np.ndarray, num_classes: int, pdf: PdfPages, png_path: Path):
+def _plot_confusion(cm: np.ndarray,
+                    class_names: List[str],
+                    pdf: PdfPages,
+                    png_path: Path):
+
     fig = plt.figure(figsize=(6, 6))
     ax = fig.add_subplot(111)
+
     im = ax.imshow(cm, interpolation="nearest", cmap="Blues")
     ax.set_title("Confusion Matrix")
-    tick_marks = np.arange(num_classes)
+
+    tick_marks = np.arange(len(class_names))
     ax.set_xticks(tick_marks)
     ax.set_yticks(tick_marks)
+
+    ax.set_xticklabels(class_names, rotation=45, ha="right", fontsize=8)
+    ax.set_yticklabels(class_names, fontsize=8)
+
     ax.set_xlabel("Predicted label")
     ax.set_ylabel("True label")
-    thresh = cm.max() / 2.0 if cm.max() else 0.0
 
+    thresh = cm.max() / 2.0 if cm.max() else 0.0
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
         ax.text(
-            j,
-            i,
-            format(cm[i, j], "d"),
-            horizontalalignment="center",
-            verticalalignment="center",
+            j, i, format(cm[i, j], "d"),
+            horizontalalignment="center", verticalalignment="center",
             fontsize=8,
             color="white" if cm[i, j] > thresh else "black",
         )
@@ -233,7 +240,7 @@ def train(cli_args, log_dir: Path) -> Path:
     pdf_lines.extend(eval_text)
     cm = confusion_matrix(y_true_eval, y_pred_eval)
     cm_png_path = output_dir / "confusion_matrix.png"
-    _plot_confusion(cm, cfg["num_classes"], pdf, cm_png_path)
+    _plot_confusion(cm, cfg["label_names"], pdf, cm_png_path)
     _render_text_page(pdf, pdf_lines)
     pdf.close()
     return best_path
