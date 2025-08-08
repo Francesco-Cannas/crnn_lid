@@ -1,6 +1,8 @@
+datasets[audio]
 fpdf
 Jinja2>=3.1.6
 h5py
+hf_xet
 imageio
 librosa
 matplotlib
@@ -16,6 +18,7 @@ pylance
 scikit-learn
 scipy
 seaborn
+soundfile
 timm
 torch==2.7.0
 torchaudio==2.7.0
