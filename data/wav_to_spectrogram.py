@@ -59,7 +59,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--source",
-        default=r"C:\Users\fraca\Documents\GitHub\crnn_lid\data\voxforge",
+        default=r"C:\Users\fraca\Documents\GitHub\crnn_lid\data\common_voice",
     )
     parser.add_argument(
         "--target",

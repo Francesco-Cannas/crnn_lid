@@ -8,10 +8,10 @@ Il progetto implementa un sistema di **Language Identification (LID)** che trasf
 **Lingue supportate (label predefinite)**  
 | Codice | Lingua | Dataset di origine |
 |--------|--------|--------------------|
-| `EN`   | Inglese | VoxForge |
-| `IT`   | Italiano | VoxForge |
-| `SP`   | Spagnolo | VoxForge |
-| `SR`   | Sardo (Sardinian) | VoxForge |
+| `EN`   | Inglese | CommonVoice |
+| `IT`   | Italiano | CommonVoice |
+| `SP`   | Spagnolo | CommonVoice |
+| `SR`   | Sardo | CommonVoice |
 
 Puoi ampliare il numero di lingue aggiungendo altri CSV/ cartelle spettrogrammi e aggiornando `manage/config.yaml` (chiavi `label_names` e `num_classes`).
 
