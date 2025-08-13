@@ -20,7 +20,7 @@ from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
 )
-from torch.optim import Adam
+from torch.optim import AdamW
 from yaml import safe_load
 
 from . import data_loaders, models
@@ -137,8 +137,8 @@ def train(cli_args, log_dir: Path) -> Path:
     ishape = train_gen.get_input_shape()
     model_shape = (ishape[2], ishape[0], ishape[1])
     net = ModelCls.create_model(model_shape, cfg).to(device)
-    criterion = torch.nn.CrossEntropyLoss()
-    optimizer = Adam(net.parameters(), lr=cfg["learning_rate"])
+    criterion = torch.nn.CrossEntropyLoss(label_smoothing=0.05)
+    optimizer = AdamW(net.parameters(), lr=cfg["learning_rate"], betas=(0.9, 0.999), eps=1e-8, weight_decay=0.00035)
 
     best_val_f1 = 0.0
     best_path = log_dir / "best_model.pth"

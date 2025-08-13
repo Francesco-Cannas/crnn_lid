@@ -3,14 +3,14 @@ validation_data_dir: "C:/Users/fraca/Documents/GitHub/crnn_lid/validation_data_d
 test_data_dir: "C:/Users/fraca/Documents/GitHub/crnn_lid/test_data_dir/testing.csv"
 
 batch_size: 64
-learning_rate: 0.001
-num_epochs: 40
+learning_rate: 0.0003
+num_epochs: 35
 
 data_loader: "ImageLoader"
 color_mode: "L"  # L = bw or RGB
 input_shape: [129, 200, 1]
 
-model: "topcoder_crnn_finetune"
+model: "topcoder"
 
 segment_length: 10  # number of seconds each spectogram represents
 pixel_per_second: 50
