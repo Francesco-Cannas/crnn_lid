@@ -10,10 +10,10 @@ data_loader: "ImageLoader"
 color_mode: "L"  # L = bw or RGB
 input_shape: [129, 200, 1]
 
-model: "topcoder"
+model: "topcoder_crnn_finetune"
 
 segment_length: 10  # number of seconds each spectogram represents
 pixel_per_second: 50
 
-label_names: ["EN", "IT", "SP", "SR"]
+label_names: ["A", "CA", "LO", "NU"]
 num_classes: 4
