@@ -11,7 +11,7 @@ class ImageLoader(CSVLoader):
         if self.config.get("color_mode", "RGB") == "L":
             img = Image.open(file_path).convert('L')
             img_array = np.array(img).astype(np.float32) / 255.0
-            img_array = np.expand_dims(img_array, axis=-1)  # (H, W, 1)
+            img_array = np.expand_dims(img_array, axis=-1)
         else:
             img = Image.open(file_path).convert('RGB')
             img_array = np.array(img).astype(np.float32) / 255.0

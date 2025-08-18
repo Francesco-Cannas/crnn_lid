@@ -38,7 +38,7 @@ class SpectrogramGenerator:
         self.shuffle = shuffle
         self.run_only_once = run_only_once
 
-        self.overlap_ratio: float = float(config.get('overlap_ratio', 0.0))
+        self.overlap_ratio: float = float(config.get('overlap_ratio', 0.5))
 
         if self.source.is_dir():
             files: List[str] = []
@@ -80,6 +80,11 @@ class SpectrogramGenerator:
                 if height != tgt_h:
                     raise ValueError(f"Height mismatch {height} vs {tgt_h}")
 
+                if width < tgt_w:
+                    pad_w = tgt_w - width
+                    spect = np.pad(spect, ((0, 0), (0, pad_w), (0, 0)), mode="edge")
+                    width = spect.shape[1]
+
                 step = max(1, int(tgt_w * (1 - self.overlap_ratio)))
                 for start in range(0, width - tgt_w + 1, step):
                     segment = spect[:, start: start + tgt_w]
@@ -91,7 +96,7 @@ class SpectrogramGenerator:
             except ValueError as e:
                 logger.error("ValueError on %s: %s", file_path, e)
             except Exception as e:
-                logger.exception("Unexpected error processing %s", file_path, e)
+                logger.exception("Unexpected error processing %s: %s", file_path, e)
 
             idx += 1
             if idx >= total:
@@ -135,8 +140,8 @@ class SpectrogramGenerator:
             else:
                 y = np.pad(y, (0, max_len - y.shape[0]), mode="constant")
 
-        n_fft = min(1024, max(256, int(sr * 0.025)))
-        hop_length = n_fft // 4
+        hop_length = max(1, int(sr / pixel_per_sec))
+        n_fft = max(256, 4 * hop_length)
 
         S = lf.melspectrogram(
             y=y,
@@ -147,13 +152,6 @@ class SpectrogramGenerator:
             power=2.0,
         )
         S = librosa.power_to_db(S, ref=np.max)
-
-        time_frames = max(1, int(np.ceil(len(y) / sr * pixel_per_sec)))
-        if S.shape[1] > time_frames:
-            S = S[:, :time_frames]
-        elif S.shape[1] < time_frames:
-            pad_t = time_frames - S.shape[1]
-            S = np.pad(S, ((0, 0), (0, pad_t)), mode="edge")
 
         S_norm = (S - S.min()) / (S.max() - S.min() + 1e-8)
         return (S_norm * 255).astype(np.uint8)
