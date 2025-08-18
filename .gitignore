@@ -1,5 +1,3 @@
-progetto/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -62,12 +60,9 @@ target/
 .ipynb_checkpoints
 
 # Project specific
-**/snapshots
-**/model.ckpt-157585
 .idea/**
-*/log/**
 */logs/**
-/datasets/**
+data/common_voice/*/
 
 *.iml
 **/.texpadtmp/**
