@@ -3,10 +3,10 @@ import random
 from pathlib import Path
 
 LABELS = {
-    "altro": 0,
-    "campidanese": 1,
-    "logudorese": 2,
-    "nuorese": 3,
+    "english": 0,
+    "italian": 1,
+    "sardinian": 2,
+    "spanish": 3,
 }
 
 

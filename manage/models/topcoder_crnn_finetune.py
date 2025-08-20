@@ -62,7 +62,7 @@ class TopcoderCRNNFinetune(nn.Module):
         x = x.view(x.size(0), x.size(1), -1)  # (B, W', C'*H')
         self.lstm.flatten_parameters()
         x, _ = self.lstm(x)  # (B, W', 1024)
-        x = x[:, -1, :]  # ultimo time-step
+        x = x[:, -1, :]
         return self.classifier(x)
 
 

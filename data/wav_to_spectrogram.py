@@ -26,7 +26,7 @@ def directory_to_spectrograms(
     if segment_length is not None:
         config["segment_length"] = segment_length
 
-    languages = ["altro", "campidanese", "logudorese", "nuorese"]
+    languages = ["english", "italian", "sardinian", "spanish"]
 
     generators = [
         SpectrogramGenerator(source / lang, config, shuffle=False, run_only_once=True)

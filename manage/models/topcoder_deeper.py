@@ -38,7 +38,6 @@ class TopcoderCNN(nn.Module):
             nn.Dropout(0.5),
         )
 
-        # dimensione flatten calcolata dinamicamente
         with torch.no_grad():
             flat = self.features(torch.zeros(1, *input_shape)).view(1, -1).size(1)
 
