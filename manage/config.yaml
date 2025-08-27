@@ -4,13 +4,13 @@ test_data_dir: "C:/Users/fraca/Documents/GitHub/crnn_lid/test_data_dir/testing.c
 
 batch_size: 64
 learning_rate: 0.0003
-num_epochs: 35
+num_epochs: 30
 
 data_loader: "ImageLoader"
 color_mode: "L"  # L = bw or RGB
 input_shape: [129, 200, 1]
 
-model: "xception"
+model: "cnn"
 
 segment_length: 5  # number of seconds each spectrogram represents
 pixel_per_second: 40

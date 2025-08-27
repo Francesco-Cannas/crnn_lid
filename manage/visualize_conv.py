@@ -78,7 +78,7 @@ def visualize_conv_filters(
             with pkl_file.open("rb") as f_read:
                 kept = pickle.load(f_read)
             print(f"Loaded filters from {pkl_file}")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             print(f"Could not load {pkl_file}: {exc}")
 
     if not kept:
